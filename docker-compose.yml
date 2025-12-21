@@ -1,0 +1,138 @@
+# Docker Compose for Chat Application
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    build:
+      context: .
+      dockerfile: database/Dockerfile
+    container_name: chat-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: chat_app
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - chat-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: chat-api-gateway
+    restart: always
+    ports:
+      - "8000:3000"
+    environment:
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+      - CHAT_SERVICE_URL=http://chat-service:3003
+    depends_on:
+      - auth-service
+      - user-service
+      - chat-service
+    networks:
+      - chat-network
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: chat-auth-service
+    restart: always
+    ports:
+      - "8001:3001"
+    environment:
+      - PORT=3001
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=root_password_123
+      - DB_NAME=chat_app
+      - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+      - JWT_EXPIRE=7d
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - chat-network
+
+  # User Service
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: chat-user-service
+    restart: always
+    ports:
+      - "8002:3002"
+    environment:
+      - PORT=3002
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=root_password_123
+      - DB_NAME=chat_app
+      - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - chat-network
+
+  # Chat Service
+  chat-service:
+    build:
+      context: ./backend/chat-service
+      dockerfile: Dockerfile
+    container_name: chat-chat-service
+    restart: always
+    ports:
+      - "8003:3003"
+    environment:
+      - PORT=3003
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=root_password_123
+      - DB_NAME=chat_app
+      - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+      - FRONTEND_URL=http://localhost:9000
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
+    volumes:
+      - ./backend/chat-service/uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - chat-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_GATEWAY_URL: http://localhost:8000
+        REACT_APP_CHAT_SERVICE_URL: http://localhost:8003
+    container_name: chat-frontend
+    restart: always
+    ports:
+      - "9000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - chat-network
+
+networks:
+  chat-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

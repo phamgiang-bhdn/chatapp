@@ -1,0 +1,9 @@
+# Add to .gitignore
+*.log
+.env
+node_modules/
+build/
+dist/
+
+# Docker
+.dockerignore

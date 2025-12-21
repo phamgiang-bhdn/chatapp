@@ -1,0 +1,142 @@
+# Development Docker Compose (với hot reload)
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: chat-mysql-dev
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: chat_auth
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - chat-network
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile.dev
+    container_name: chat-api-gateway-dev
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/api-gateway:/app
+      - /app/node_modules
+    environment:
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+      - CHAT_SERVICE_URL=http://chat-service:3003
+    depends_on:
+      - auth-service
+      - user-service
+      - chat-service
+    networks:
+      - chat-network
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile.dev
+    container_name: chat-auth-service-dev
+    restart: always
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/auth-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3001
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=root_password_123
+      - DB_NAME=chat_auth
+      - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+      - JWT_EXPIRE=7d
+    depends_on:
+      - mysql
+    networks:
+      - chat-network
+
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile.dev
+    container_name: chat-user-service-dev
+    restart: always
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./backend/user-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3002
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=root_password_123
+      - DB_NAME=chat_users
+      - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+    depends_on:
+      - mysql
+    networks:
+      - chat-network
+
+  chat-service:
+    build:
+      context: ./backend/chat-service
+      dockerfile: Dockerfile.dev
+    container_name: chat-chat-service-dev
+    restart: always
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./backend/chat-service:/app
+      - /app/node_modules
+    environment:
+      - PORT=3003
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=root_password_123
+      - DB_NAME=chat_messages
+      - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+      - FRONTEND_URL=http://localhost:3001
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
+    depends_on:
+      - mysql
+    networks:
+      - chat-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: chat-frontend-dev
+    restart: always
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_GATEWAY_URL=http://localhost:3000
+      - REACT_APP_CHAT_SERVICE_URL=http://localhost:3003
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - api-gateway
+    networks:
+      - chat-network
+
+networks:
+  chat-network:
+    driver: bridge
+
+volumes:
+  mysql_dev_data:
