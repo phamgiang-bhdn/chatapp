@@ -24,6 +24,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { userService } from '../../api/userService';
 import { chatService } from '../../api/chatService';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 const UserProfileDialog = ({ open, onClose, userId, onStartChat }) => {
   const [userProfile, setUserProfile] = useState(null);
@@ -33,6 +34,7 @@ const UserProfileDialog = ({ open, onClose, userId, onStartChat }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const { user: currentUser } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   useEffect(() => {
     if (open && userId) {
@@ -92,9 +94,10 @@ const UserProfileDialog = ({ open, onClose, userId, onStartChat }) => {
         setIsFollowing(true);
       }
       await loadFollowers();
+      showSuccess(isFollowing ? 'Đã bỏ theo dõi' : 'Đã theo dõi');
     } catch (error) {
       console.error('Failed to follow/unfollow:', error);
-      alert('Không thể thực hiện hành động');
+      showError('Không thể thực hiện hành động');
     } finally {
       setLoading(false);
     }

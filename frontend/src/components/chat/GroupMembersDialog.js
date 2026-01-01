@@ -21,12 +21,17 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { chatService } from '../../api/chatService';
 import { userService } from '../../api/userService';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import ConfirmDialog from '../common/ConfirmDialog';
 
 const GroupMembersDialog = ({ open, onClose, conversation }) => {
   const [members, setMembers] = useState([]);
   const [memberDetails, setMemberDetails] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showConfirmRemove, setShowConfirmRemove] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState(null);
   const { user } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   useEffect(() => {
     if (open && conversation) {
@@ -65,15 +70,23 @@ const GroupMembersDialog = ({ open, onClose, conversation }) => {
     }
   };
 
-  const handleRemoveMember = async (userId) => {
-    if (!window.confirm('Bạn có chắc muốn xóa thành viên này?')) return;
+  const handleRemoveMember = (userId) => {
+    setMemberToRemove(userId);
+    setShowConfirmRemove(true);
+  };
 
+  const confirmRemoveMember = async () => {
+    if (!memberToRemove) return;
+    setShowConfirmRemove(false);
     try {
-      await chatService.removeMember(conversation.id, userId);
+      await chatService.removeMember(conversation.id, memberToRemove);
       await loadMembers();
+      showSuccess('Đã xóa thành viên khỏi nhóm');
+      setMemberToRemove(null);
     } catch (error) {
       console.error('Failed to remove member:', error);
-      alert('Không thể xóa thành viên');
+      showError('Không thể xóa thành viên');
+      setMemberToRemove(null);
     }
   };
 
@@ -83,9 +96,10 @@ const GroupMembersDialog = ({ open, onClose, conversation }) => {
     try {
       await chatService.updateMemberRole(conversation.id, member.userId, newRole);
       await loadMembers();
+      showSuccess(newRole === 'admin' ? 'Đã đặt làm admin' : 'Đã hủy quyền admin');
     } catch (error) {
       console.error('Failed to update role:', error);
-      alert('Không thể cập nhật vai trò');
+      showError('Không thể cập nhật vai trò');
     }
   };
 
@@ -163,6 +177,20 @@ const GroupMembersDialog = ({ open, onClose, conversation }) => {
       <DialogActions>
         <Button onClick={onClose}>Đóng</Button>
       </DialogActions>
+
+      <ConfirmDialog
+        open={showConfirmRemove}
+        title="Xóa thành viên"
+        message="Bạn có chắc muốn xóa thành viên này khỏi nhóm?"
+        onConfirm={confirmRemoveMember}
+        onCancel={() => {
+          setShowConfirmRemove(false);
+          setMemberToRemove(null);
+        }}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        severity="error"
+      />
     </Dialog>
   );
 };

@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { userService } from '../../api/userService';
 import { chatService } from '../../api/chatService';
+import { useToast } from '../../context/ToastContext';
 
 const CreateGroupDialog = ({ open, onClose, onGroupCreated }) => {
   const [groupName, setGroupName] = useState('');
@@ -26,6 +27,7 @@ const CreateGroupDialog = ({ open, onClose, onGroupCreated }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { showError, showWarning } = useToast();
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -54,12 +56,12 @@ const CreateGroupDialog = ({ open, onClose, onGroupCreated }) => {
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
-      alert('Vui lòng nhập tên nhóm');
+      showWarning('Vui lòng nhập tên nhóm');
       return;
     }
 
     if (selectedUsers.length === 0) {
-      alert('Vui lòng chọn ít nhất 1 thành viên');
+      showWarning('Vui lòng chọn ít nhất 1 thành viên');
       return;
     }
 
@@ -75,7 +77,7 @@ const CreateGroupDialog = ({ open, onClose, onGroupCreated }) => {
       handleClose();
     } catch (error) {
       console.error('Failed to create group:', error);
-      alert('Không thể tạo nhóm');
+      showError('Không thể tạo nhóm');
     } finally {
       setLoading(false);
     }

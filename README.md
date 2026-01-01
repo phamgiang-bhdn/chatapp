@@ -46,6 +46,8 @@ CLOUDINARY_API_SECRET=your_api_secret
 **Lưu ý**: Docker Compose sẽ tự động đọc file `.env` trong cùng thư mục.
 
 ### Bước 2: Chạy ứng dụng
+
+#### Cách 1: Sử dụng NPM script (Khuyến nghị)
 ```bash
 npm start
 ```
@@ -56,11 +58,51 @@ Script này sẽ:
 - Khởi động tất cả services
 - Hiển thị trạng thái và URLs
 
+#### Cách 2: Chạy trực tiếp với Docker Compose
+Nếu muốn chạy trực tiếp với docker-compose:
+
+```bash
+# Build và khởi động tất cả services
+docker-compose up -d --build
+
+# Hoặc chỉ khởi động (không build lại)
+docker-compose up -d
+```
+
+**Lưu ý**: 
+- `-d` flag chạy services ở chế độ background (detached mode)
+- `--build` flag build lại images trước khi khởi động
+- Lần đầu chạy nên dùng `--build` để đảm bảo images được build đúng
+
 ### Bước 3: Đợi khởi động
 - Lần đầu: ~2-3 phút (tải images, build)
 - Các lần sau: ~30 giây
+- Đợi MySQL khởi động hoàn toàn (khoảng 30-60 giây)
 
-### Bước 4: Mở trình duyệt
+### Bước 4: Chạy Migration (Quan trọng!)
+Sau khi MySQL đã khởi động, chạy migration để tạo các bảng trong database:
+
+```bash
+npm run migrate
+```
+
+**Lưu ý**: 
+- Migration chỉ cần chạy một lần sau khi khởi động lần đầu
+- Nếu đã chạy migration trước đó, có thể bỏ qua bước này
+
+### Bước 5: Chạy Seeder (Tùy chọn)
+Để có dữ liệu mẫu để test, chạy seeder:
+
+```bash
+npm run seed
+```
+
+Hoặc chạy không cần xác nhận:
+```bash
+npm run seed:force
+```
+
+### Bước 6: Mở trình duyệt
 Truy cập: **http://localhost:9000**
 
 ## 🛑 Dừng ứng dụng
@@ -116,13 +158,31 @@ npm run status         # Kiểm tra trạng thái containers
 
 ### Database
 ```bash
+npm run migrate        # Chạy database migrations
 npm run seed           # Chạy seeder (có xác nhận)
 npm run seed:force     # Chạy seeder không cần xác nhận
 ```
 
 ### Docker commands (nếu cần)
 ```bash
-docker-compose down -v  # Xóa toàn bộ (kể cả database)
+# Khởi động services
+docker-compose up -d              # Khởi động ở chế độ background
+docker-compose up -d --build      # Build lại và khởi động
+
+# Dừng services
+docker-compose down               # Dừng và xóa containers
+docker-compose down -v            # Dừng và xóa containers + volumes (xóa cả database)
+
+# Xem logs
+docker-compose logs -f            # Xem logs tất cả services
+docker-compose logs -f mysql      # Xem logs MySQL
+
+# Xem trạng thái
+docker-compose ps                 # Xem trạng thái containers
+
+# Restart
+docker-compose restart            # Restart tất cả services
+docker-compose restart mysql      # Restart MySQL
 ```
 
 ## 🌐 URLs

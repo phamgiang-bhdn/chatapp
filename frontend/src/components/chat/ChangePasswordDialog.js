@@ -14,6 +14,7 @@ import {
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { authService } from '../../api/authService';
+import { useToast } from '../../context/ToastContext';
 
 const ChangePasswordDialog = ({ open, onClose }) => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -24,6 +25,7 @@ const ChangePasswordDialog = ({ open, onClose }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showSuccess } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,7 +58,7 @@ const ChangePasswordDialog = ({ open, onClose }) => {
       setNewPassword('');
       setConfirmPassword('');
       setError('');
-      alert('Đổi mật khẩu thành công!');
+      showSuccess('Đổi mật khẩu thành công!');
       onClose();
     } catch (error) {
       setError(error.response?.data?.message || 'Không thể đổi mật khẩu. Vui lòng thử lại.');
@@ -231,4 +233,6 @@ const ChangePasswordDialog = ({ open, onClose }) => {
 };
 
 export default ChangePasswordDialog;
-
+
+
+

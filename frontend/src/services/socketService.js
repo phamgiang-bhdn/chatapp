@@ -97,6 +97,8 @@ class SocketService {
 
   onNewMessage(callback) {
     if (this.socket) {
+      // Remove existing listener first to prevent duplicates
+      this.socket.off(SOCKET_EVENTS.NEW_MESSAGE);
       this.socket.on(SOCKET_EVENTS.NEW_MESSAGE, callback);
     }
   }
@@ -109,6 +111,8 @@ class SocketService {
 
   onUserTyping(callback) {
     if (this.socket) {
+      // Remove existing listener first to prevent duplicates
+      this.socket.off(SOCKET_EVENTS.USER_TYPING);
       this.socket.on(SOCKET_EVENTS.USER_TYPING, callback);
     }
   }
@@ -134,6 +138,12 @@ class SocketService {
   removeAllListeners() {
     if (this.socket) {
       this.socket.removeAllListeners();
+    }
+  }
+
+  removeListener(event, callback) {
+    if (this.socket) {
+      this.socket.off(event, callback);
     }
   }
 }

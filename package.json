@@ -30,6 +30,7 @@
     "logs:mysql": "docker-compose logs -f mysql",
     "logs:backend": "docker-compose logs -f api-gateway auth-service user-service chat-service",
     "status": "docker-compose ps",
+    "migrate": "cd database && npm install && npm run migrate",
     "seed": "node scripts/seed.js",
     "seed:force": "node scripts/seed.js --force"
   },
