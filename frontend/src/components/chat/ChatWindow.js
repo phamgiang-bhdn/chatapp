@@ -360,7 +360,7 @@ const ChatWindow = ({ conversation }) => {
   };
 
   const handleAvatarClick = (senderId) => {
-    if (senderId === user.id) return;
+    if (!senderId) return;
     setViewingUserId(senderId);
     setShowUserProfile(true);
   };
@@ -518,6 +518,7 @@ const ChatWindow = ({ conversation }) => {
                   setThreadMessages([]);
                 }}
           onSendThreadMessage={handleSendThreadMessage}
+          onAvatarClick={handleAvatarClick}
         />
       )}
 

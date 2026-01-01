@@ -239,14 +239,17 @@ export const useThreads = (conversation, user) => {
       socketService.socket.on(SOCKET_EVENTS.THREAD_CREATED, handleThreadCreated);
     }
 
-    socketService.onNewMessage(handleNewMessage);
+    const unsubscribe = socketService.onNewMessage(handleNewMessage);
 
     return () => {
       isMounted = false;
       loadedUserIdsRef.current.clear();
       if (socketService.socket) {
         socketService.socket.off(SOCKET_EVENTS.THREAD_CREATED, handleThreadCreated);
-        socketService.socket.off(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
+      }
+      // Use the unsubscribe function to remove this specific callback
+      if (unsubscribe) {
+        unsubscribe();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

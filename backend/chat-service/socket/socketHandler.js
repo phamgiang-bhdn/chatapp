@@ -144,20 +144,26 @@ module.exports = (io) => {
           messageData.sender = { id: socket.userId, username: 'Unknown', fullName: 'Unknown User' };
         }
         
-        io.to(`conversation_${conversationId}`).emit(SOCKET_EVENTS.NEW_MESSAGE, {
-          message: messageData
-        });
-
-        const participants = await ConversationParticipant.findAll({
+        // Get all participants to emit to their user rooms
+        const allParticipants = await ConversationParticipant.findAll({
           where: {
             conversationId,
-            userId: { [Op.ne]: socket.userId },
             isActive: true
           }
         });
 
+        // Emit NEW_MESSAGE to all participants' user rooms
+        // This covers both conversation list updates AND message display in ChatWindow
+        for (const participant of allParticipants) {
+          io.to(`user_${participant.userId}`).emit(SOCKET_EVENTS.NEW_MESSAGE, {
+            message: messageData
+          });
+        }
+
+        // Create notifications only for other participants (not sender)
+        const otherParticipants = allParticipants.filter(p => p.userId !== socket.userId);
         const notificationController = require('../controllers/notificationController');
-        for (const participant of participants) {
+        for (const participant of otherParticipants) {
           await notificationController.createNotification(
             participant.userId,
             NOTIFICATION_TYPES.MESSAGE,

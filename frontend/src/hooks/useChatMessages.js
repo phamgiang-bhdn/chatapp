@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { chatService } from '../api/chatService';
 import { userService } from '../api/userService';
 import socketService from '../services/socketService';
-import { SOCKET_EVENTS } from '../constants/socketEvents';
 
 export const useChatMessages = (conversation, user) => {
   const [messages, setMessages] = useState([]);
@@ -226,7 +225,7 @@ export const useChatMessages = (conversation, user) => {
       }
     };
 
-    socketService.onNewMessage(handleNewMessage);
+    const unsubscribe = socketService.onNewMessage(handleNewMessage);
 
     return () => {
       isMounted = false;
@@ -234,9 +233,9 @@ export const useChatMessages = (conversation, user) => {
         clearTimeout(markAsReadTimeoutRef.current);
       }
       loadedUserIdsRef.current.clear();
-      // Remove specific listener instead of all listeners
-      if (socketService.socket) {
-        socketService.socket.off(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
+      // Use the unsubscribe function to remove this specific callback
+      if (unsubscribe) {
+        unsubscribe();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

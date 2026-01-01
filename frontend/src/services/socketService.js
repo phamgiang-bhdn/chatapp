@@ -7,6 +7,8 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.onlineUsers = new Set();
+    this.messageCallbacks = new Set();
+    this.typingCallbacks = new Set();
   }
 
   connect(token) {
@@ -51,6 +53,8 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.onlineUsers.clear();
+      this.messageCallbacks.clear();
+      this.typingCallbacks.clear();
     }
   }
 
@@ -97,10 +101,20 @@ class SocketService {
 
   onNewMessage(callback) {
     if (this.socket) {
-      // Remove existing listener first to prevent duplicates
+      // Add callback to the set
+      this.messageCallbacks.add(callback);
+      
+      // Remove existing master listener and add new one that calls all callbacks
       this.socket.off(SOCKET_EVENTS.NEW_MESSAGE);
-      this.socket.on(SOCKET_EVENTS.NEW_MESSAGE, callback);
+      this.socket.on(SOCKET_EVENTS.NEW_MESSAGE, (data) => {
+        this.messageCallbacks.forEach(cb => cb(data));
+      });
     }
+    
+    // Return unsubscribe function
+    return () => {
+      this.messageCallbacks.delete(callback);
+    };
   }
 
   sendTyping(conversationId, isTyping) {
@@ -111,10 +125,20 @@ class SocketService {
 
   onUserTyping(callback) {
     if (this.socket) {
-      // Remove existing listener first to prevent duplicates
+      // Add callback to the set
+      this.typingCallbacks.add(callback);
+      
+      // Remove existing master listener and add new one that calls all callbacks
       this.socket.off(SOCKET_EVENTS.USER_TYPING);
-      this.socket.on(SOCKET_EVENTS.USER_TYPING, callback);
+      this.socket.on(SOCKET_EVENTS.USER_TYPING, (data) => {
+        this.typingCallbacks.forEach(cb => cb(data));
+      });
     }
+    
+    // Return unsubscribe function
+    return () => {
+      this.typingCallbacks.delete(callback);
+    };
   }
 
   markAsRead(conversationId) {

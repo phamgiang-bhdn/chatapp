@@ -24,7 +24,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import ConfirmDialog from '../common/ConfirmDialog';
 
-const GroupMembersDialog = ({ open, onClose, conversation }) => {
+const GroupMembersDialog = ({ open, onClose, conversation, onAvatarClick }) => {
   const [members, setMembers] = useState([]);
   const [memberDetails, setMemberDetails] = useState({});
   const [loading, setLoading] = useState(false);
@@ -148,8 +148,21 @@ const GroupMembersDialog = ({ open, onClose, conversation }) => {
                   }
                 >
                   <ListItemAvatar>
-                    <Avatar>
-                      {memberUser?.fullName?.charAt(0) || memberUser?.username?.charAt(0) || '?'}
+                    <Avatar
+                      src={memberUser?.avatar ? `${memberUser.avatar}?t=${Date.now()}` : null}
+                      onClick={() => onAvatarClick && onAvatarClick(member.userId)}
+                      sx={{
+                        background: memberUser?.avatar 
+                          ? 'transparent' 
+                          : 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
+                        cursor: onAvatarClick ? 'pointer' : 'default',
+                        transition: 'transform 0.2s',
+                        '&:hover': onAvatarClick ? {
+                          transform: 'scale(1.1)'
+                        } : {}
+                      }}
+                    >
+                      {!memberUser?.avatar && (memberUser?.fullName?.charAt(0) || memberUser?.username?.charAt(0) || '?')}
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText

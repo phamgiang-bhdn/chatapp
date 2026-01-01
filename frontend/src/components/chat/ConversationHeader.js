@@ -191,6 +191,7 @@ export const ConversationHeader = ({
         open={showMembers}
         onClose={() => setShowMembers(false)}
         conversation={conversation}
+        onAvatarClick={onAvatarClick}
       />
     </>
   );

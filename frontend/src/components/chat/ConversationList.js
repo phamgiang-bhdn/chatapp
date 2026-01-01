@@ -57,14 +57,32 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
     const handleNewMessage = (data) => {
       if (data.message && data.message.conversationId) {
         if (!data.message.threadId) {
-          if (selectedConversation?.id !== data.message.conversationId || selectedConversation?.threadId) {
-            setConversations(prev => prev.map(conv => {
-              if (conv.id === data.message.conversationId && data.message.senderId !== currentUser.id) {
-                return { ...conv, unreadCount: (conv.unreadCount || 0) + 1 };
+          // Update conversation: move to top and update unread count
+          setConversations(prev => {
+            const conversationId = data.message.conversationId;
+            const isFromOther = data.message.senderId !== currentUser.id;
+            const isCurrentlyViewing = selectedConversation?.id === conversationId && !selectedConversation?.threadId;
+            
+            // Update the conversation with new lastMessageAt and optionally unreadCount
+            const updated = prev.map(conv => {
+              if (conv.id === conversationId) {
+                const newUnreadCount = (isFromOther && !isCurrentlyViewing) 
+                  ? (conv.unreadCount || 0) + 1 
+                  : conv.unreadCount;
+                return { 
+                  ...conv, 
+                  lastMessageAt: new Date().toISOString(),
+                  unreadCount: newUnreadCount
+                };
               }
               return conv;
-            }));
-          }
+            });
+            
+            // Sort by lastMessageAt descending (newest first)
+            return updated.sort((a, b) => 
+              new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)
+            );
+          });
         } else {
           const isThreadSelected = selectedConversation?.threadId === data.message.threadId && selectedConversation?.id === data.message.conversationId;
           if (!isThreadSelected && data.message.senderId !== currentUser.id) {
@@ -129,10 +147,13 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
       }
     };
 
+    let unsubscribeMessage = null;
+    let checkSocketInterval = null;
+
     if (socketService.socket) {
       socketService.socket.on(SOCKET_EVENTS.ONLINE_USERS, handleOnlineUsers);
       socketService.onUserStatusChange(handleStatusChange);
-      socketService.onNewMessage(handleNewMessage);
+      unsubscribeMessage = socketService.onNewMessage(handleNewMessage);
       socketService.onMessagesRead(handleMessagesRead);
       socketService.socket.on(SOCKET_EVENTS.THREAD_CREATED, handleThreadCreated);
       
@@ -140,27 +161,41 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
         socketService.socket.emit(SOCKET_EVENTS.GET_ONLINE_USERS);
       }
     } else {
-      const checkSocket = setInterval(() => {
+      checkSocketInterval = setInterval(() => {
         if (socketService.socket) {
           socketService.socket.on(SOCKET_EVENTS.ONLINE_USERS, handleOnlineUsers);
           socketService.onUserStatusChange(handleStatusChange);
-          socketService.onNewMessage(handleNewMessage);
+          unsubscribeMessage = socketService.onNewMessage(handleNewMessage);
           socketService.onMessagesRead(handleMessagesRead);
           socketService.socket.on(SOCKET_EVENTS.THREAD_CREATED, handleThreadCreated);
           if (socketService.socket.connected) {
             socketService.socket.emit(SOCKET_EVENTS.GET_ONLINE_USERS);
           }
-          clearInterval(checkSocket);
+          clearInterval(checkSocketInterval);
         }
       }, 100);
       
-      setTimeout(() => clearInterval(checkSocket), 5000);
+      setTimeout(() => clearInterval(checkSocketInterval), 5000);
     }
 
     const initialOnlineUsers = socketService.getOnlineUsers();
     if (initialOnlineUsers.length > 0) {
       setOnlineUsers(new Set(initialOnlineUsers));
     }
+
+    // Cleanup function
+    return () => {
+      if (checkSocketInterval) {
+        clearInterval(checkSocketInterval);
+      }
+      if (unsubscribeMessage) {
+        unsubscribeMessage();
+      }
+      if (socketService.socket) {
+        socketService.socket.off(SOCKET_EVENTS.ONLINE_USERS, handleOnlineUsers);
+        socketService.socket.off(SOCKET_EVENTS.THREAD_CREATED, handleThreadCreated);
+      }
+    };
   }, [selectedConversation, currentUser]);
 
   const loadConversations = async () => {
@@ -430,6 +465,13 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
                     >
                       <Avatar
                         src={conversation.type === 'group' ? null : (participantUsers[conversation.id]?.avatar ? `${participantUsers[conversation.id].avatar}?t=${Date.now()}` : null)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (conversation.type === 'private' && participantUsers[conversation.id]?.id) {
+                            setViewingUserId(participantUsers[conversation.id].id);
+                            setShowUserProfile(true);
+                          }
+                        }}
                         sx={{
                           width: 52,
                           height: 52,
@@ -439,6 +481,11 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
                           fontWeight: 700,
                           fontSize: '1.3rem',
                           boxShadow: '0 2px 8px rgba(99, 102, 241, 0.2)',
+                          cursor: conversation.type === 'private' && participantUsers[conversation.id]?.id ? 'pointer' : 'default',
+                          transition: 'transform 0.2s',
+                          '&:hover': conversation.type === 'private' && participantUsers[conversation.id]?.id ? {
+                            transform: 'scale(1.05)'
+                          } : {}
                         }}
                       >
                         {conversation.type === 'group' ? (

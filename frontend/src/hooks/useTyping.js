@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import socketService from '../services/socketService';
-import { SOCKET_EVENTS } from '../constants/socketEvents';
 
 export const useTyping = (conversation) => {
   const [typing, setTyping] = useState(false);
@@ -27,15 +26,15 @@ export const useTyping = (conversation) => {
       setTyping(data.isTyping);
     };
 
-    socketService.onUserTyping(handleUserTyping);
+    const unsubscribe = socketService.onUserTyping(handleUserTyping);
 
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      // Remove specific listener
-      if (socketService.socket) {
-        socketService.socket.off(SOCKET_EVENTS.USER_TYPING, handleUserTyping);
+      // Use the unsubscribe function to remove this specific callback
+      if (unsubscribe) {
+        unsubscribe();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -18,7 +18,8 @@ export const ThreadsDrawer = ({
   setNewMessage,
   onSelectThread,
   onBackToThreads,
-  onSendThreadMessage
+  onSendThreadMessage,
+  onAvatarClick
 }) => {
   return (
     <Drawer
@@ -136,6 +137,7 @@ export const ThreadsDrawer = ({
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, px: 1 }}>
                           <Avatar
                             src={avatarUrl}
+                            onClick={() => onAvatarClick && onAvatarClick(message.senderId)}
                             sx={{
                               width: 24,
                               height: 24,
@@ -143,7 +145,12 @@ export const ThreadsDrawer = ({
                                 ? 'transparent' 
                                 : 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
                               fontSize: '0.75rem',
-                              fontWeight: 700
+                              fontWeight: 700,
+                              cursor: onAvatarClick ? 'pointer' : 'default',
+                              transition: 'transform 0.2s',
+                              '&:hover': onAvatarClick ? {
+                                transform: 'scale(1.1)'
+                              } : {}
                             }}
                           >
                             {!avatarUrl && avatarInitial}
@@ -165,6 +172,7 @@ export const ThreadsDrawer = ({
                         {isOwnMessage && (
                           <Avatar
                             src={user?.avatar ? `${user.avatar}?t=${Date.now()}` : null}
+                            onClick={() => onAvatarClick && onAvatarClick(user.id)}
                             sx={{
                               width: 24,
                               height: 24,
@@ -172,7 +180,12 @@ export const ThreadsDrawer = ({
                                 ? 'transparent' 
                                 : 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)',
                               fontSize: '0.75rem',
-                              fontWeight: 700
+                              fontWeight: 700,
+                              cursor: onAvatarClick ? 'pointer' : 'default',
+                              transition: 'transform 0.2s',
+                              '&:hover': onAvatarClick ? {
+                                transform: 'scale(1.1)'
+                              } : {}
                             }}
                           >
                             {!user?.avatar && ((user?.fullName || user?.username || 'U').charAt(0).toUpperCase())}
