@@ -5,6 +5,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ForumIcon from '@mui/icons-material/Forum';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupMembersDialog from './GroupMembersDialog';
 
 export const ConversationHeader = ({
@@ -16,7 +17,8 @@ export const ConversationHeader = ({
   onOpenGroupSettings,
   onLeaveGroup,
   onShowThreads,
-  onAvatarClick
+  onAvatarClick,
+  onBack
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [showMembers, setShowMembers] = useState(false);
@@ -49,7 +51,7 @@ export const ConversationHeader = ({
     <>
       <Box
         sx={{
-          p: 2.5,
+          p: { xs: 1.5, sm: 2, md: 2.5 },
           borderBottom: '3px solid #E2E8F0',
           display: 'flex',
           justifyContent: 'space-between',
@@ -58,7 +60,25 @@ export const ConversationHeader = ({
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5, md: 2 } }}>
+          {/* Back button for mobile */}
+          {onBack && (
+            <IconButton
+              onClick={onBack}
+              sx={{
+                width: { xs: 36, sm: 40 },
+                height: { xs: 36, sm: 40 },
+                background: '#F8FAFC',
+                border: '2px solid #E2E8F0',
+                '&:hover': {
+                  background: '#EDF2F7',
+                  borderColor: '#6366F1',
+                },
+              }}
+            >
+              <ArrowBackIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
+            </IconButton>
+          )}
           <Avatar
             src={conversation.type === 'group' ? null : (otherUser?.avatar ? `${otherUser.avatar}?t=${Date.now()}` : null)}
             onClick={() => {
@@ -67,13 +87,13 @@ export const ConversationHeader = ({
               }
             }}
             sx={{
-              width: 56,
-              height: 56,
+              width: { xs: 44, sm: 50, md: 56 },
+              height: { xs: 44, sm: 50, md: 56 },
               background: conversation.type === 'group'
                 ? 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)'
                 : (otherUser?.avatar ? 'transparent' : 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)'),
               fontWeight: 700,
-              fontSize: '1.4rem',
+              fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.4rem' },
               boxShadow: '0 4px 12px rgba(91, 127, 255, 0.25)',
               cursor: conversation.type === 'direct' && conversation.otherUserId ? 'pointer' : 'default',
               transition: 'transform 0.2s',
@@ -83,12 +103,21 @@ export const ConversationHeader = ({
             }}
           >
             {conversation.type === 'group' 
-              ? <GroupIcon sx={{ fontSize: '1.8rem' }} /> 
+              ? <GroupIcon sx={{ fontSize: { xs: '1.4rem', sm: '1.6rem', md: '1.8rem' } }} /> 
               : (!otherUser?.avatar && ((otherUser?.fullName || otherUser?.username || conversation.name)?.charAt(0) || 'U'))
             }
           </Avatar>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.15rem' }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 700, 
+                fontSize: { xs: '0.95rem', sm: '1.05rem', md: '1.15rem' },
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {conversation.threadId 
                 ? (conversation.name || 'Thread')
                 : (conversation.type === 'group' 
@@ -105,12 +134,12 @@ export const ConversationHeader = ({
         </Box>
         {conversation.type === 'group' && !conversation.threadId && (
           <>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: 'flex', gap: { xs: 0.5, sm: 1 } }}>
               <IconButton
                 onClick={onShowThreads}
                 sx={{
-                  width: 44,
-                  height: 44,
+                  width: { xs: 36, sm: 40, md: 44 },
+                  height: { xs: 36, sm: 40, md: 44 },
                   background: '#F8FAFC',
                   border: '2px solid #E2E8F0',
                   '&:hover': {
@@ -120,13 +149,13 @@ export const ConversationHeader = ({
                 }}
                 title="Threads"
               >
-                <ForumIcon sx={{ fontSize: '1.3rem' }} />
+                <ForumIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' } }} />
               </IconButton>
               <IconButton
                 onClick={handleOpenMenu}
                 sx={{
-                  width: 44,
-                  height: 44,
+                  width: { xs: 36, sm: 40, md: 44 },
+                  height: { xs: 36, sm: 40, md: 44 },
                   background: '#F8FAFC',
                   border: '2px solid #E2E8F0',
                   '&:hover': {
@@ -135,7 +164,7 @@ export const ConversationHeader = ({
                   },
                 }}
               >
-                <MoreVertIcon sx={{ fontSize: '1.3rem' }} />
+                <MoreVertIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' } }} />
               </IconButton>
             </Box>
             <Menu

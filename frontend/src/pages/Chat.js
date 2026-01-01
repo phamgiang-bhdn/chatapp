@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid } from '@mui/material';
+import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import socketService from '../services/socketService';
 import { authService } from '../api/authService';
@@ -13,6 +13,9 @@ const Chat = () => {
   const { user } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [conversationListKey, setConversationListKey] = useState(0);
+  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     const token = authService.getToken();
@@ -48,6 +51,10 @@ const Chat = () => {
     setConversationListKey(prev => prev + 1);
   };
 
+  const handleBackToList = () => {
+    setSelectedConversation(null);
+  };
+
   return (
     <Box
       sx={{
@@ -55,19 +62,21 @@ const Chat = () => {
         display: 'flex',
         flexDirection: 'column',
         background: '#F8FAFC',
+        overflow: 'hidden',
       }}
     >
       <ChatHeader user={user} onNotificationClick={handleNotificationClick} />
-      <Grid container sx={{ flexGrow: 1, overflow: 'hidden' }}>
-        <Grid
-          item
-          xs={12}
-          md={4}
-          lg={3}
+      <Box sx={{ flexGrow: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Conversation List - Hide on mobile when conversation is selected */}
+        <Box
           sx={{
+            width: { xs: '100%', md: '340px', lg: '380px' },
+            minWidth: { md: '300px' },
             height: '100%',
-            borderRight: '1px solid #E2E8F0',
+            borderRight: { md: '1px solid #E2E8F0' },
             background: 'white',
+            display: isMobile && selectedConversation ? 'none' : 'flex',
+            flexDirection: 'column',
           }}
         >
           <ConversationList
@@ -76,11 +85,23 @@ const Chat = () => {
             onSelectConversation={setSelectedConversation}
             onConversationUpdate={handleConversationUpdate}
           />
-        </Grid>
-        <Grid item xs={12} md={8} lg={9} sx={{ height: '100%' }}>
-          <ChatWindow conversation={selectedConversation} />
-        </Grid>
-      </Grid>
+        </Box>
+        
+        {/* Chat Window - Hide on mobile when no conversation is selected */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            height: '100%',
+            display: isMobile && !selectedConversation ? 'none' : 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <ChatWindow 
+            conversation={selectedConversation} 
+            onBack={isMobile ? handleBackToList : null}
+          />
+        </Box>
+      </Box>
     </Box>
   );
 };

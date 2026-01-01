@@ -26,7 +26,7 @@ export const MessageList = ({
   }, [messages]);
 
   return (
-    <List sx={{ flexGrow: 1, overflow: 'auto', p: 3 }}>
+    <List sx={{ flexGrow: 1, overflow: 'auto', p: { xs: 1.5, sm: 2, md: 3 } }}>
       {messages.map((message) => {
         const isPinned = pinnedMessages.some(pm => pm.messageId === message.id);
         const isOwnMessage = message.senderId === user.id;

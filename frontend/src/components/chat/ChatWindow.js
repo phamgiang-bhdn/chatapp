@@ -23,7 +23,7 @@ import UserProfileDialog from './UserProfileDialog';
 import ConfirmDialog from '../common/ConfirmDialog';
 import { handleDownloadFile } from '../../utils/messageUtils';
 
-const ChatWindow = ({ conversation }) => {
+const ChatWindow = ({ conversation, onBack }) => {
   const { user } = useAuth();
   const { showError, showSuccess, showWarning } = useToast();
   const [newMessage, setNewMessage] = useState('');
@@ -410,6 +410,7 @@ const ChatWindow = ({ conversation }) => {
         onOpenGroupSettings={() => setShowGroupSettings(true)}
         onLeaveGroup={handleLeaveGroup}
         onAvatarClick={handleAvatarClick}
+        onBack={onBack}
       />
       
       <Box sx={{ position: 'relative', flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

@@ -54,16 +54,17 @@ export const MessageItem = ({
           display: 'flex',
           flexDirection: isOwnMessage ? 'row-reverse' : 'row',
           alignItems: 'flex-end',
-          gap: 1.5,
-          maxWidth: '70%',
+          gap: { xs: 1, sm: 1.5 },
+          maxWidth: { xs: '85%', sm: '75%', md: '70%' },
         }}
       >
         <Avatar
           src={avatarUrl}
           onClick={() => onAvatarClick(message.senderId)}
           sx={{
-            width: 42,
-            height: 42,
+            width: { xs: 32, sm: 38, md: 42 },
+            height: { xs: 32, sm: 38, md: 42 },
+            fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' },
             background: avatarUrl 
               ? 'transparent' 
               : (isOwnMessage 
@@ -89,8 +90,8 @@ export const MessageItem = ({
           <Paper
             elevation={0}
             sx={{
-              py: 1.5,
-              px: 2,
+              py: { xs: 1, sm: 1.25, md: 1.5 },
+              px: { xs: 1.5, sm: 1.75, md: 2 },
               borderRadius: isOwnMessage ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
               background: isOwnMessage
                 ? 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)'

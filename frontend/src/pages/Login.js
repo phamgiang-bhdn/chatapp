@@ -84,31 +84,32 @@ const Login = () => {
         <Fade in timeout={800}>
           <Box sx={{ position: 'relative', zIndex: 1 }}>
             
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box sx={{ textAlign: 'center', mb: { xs: 3, sm: 4 } }}>
               <Box
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 90,
-                  height: 90,
-                  borderRadius: '24px',
+                  width: { xs: 70, sm: 80, md: 90 },
+                  height: { xs: 70, sm: 80, md: 90 },
+                  borderRadius: { xs: '18px', sm: '22px', md: '24px' },
                   background: 'linear-gradient(135deg, #6366F1 0%, #EC4899 100%)',
                   boxShadow: '0 20px 60px rgba(99, 102, 241, 0.5)',
-                  mb: 3,
+                  mb: { xs: 2, sm: 3 },
                   transition: 'transform 0.3s ease',
                   '&:hover': {
                     transform: 'scale(1.05) rotate(5deg)',
                   },
                 }}
               >
-                <ChatBubble sx={{ fontSize: 48, color: 'white' }} />
+                <ChatBubble sx={{ fontSize: { xs: 36, sm: 42, md: 48 }, color: 'white' }} />
               </Box>
               <Typography
                 variant="h3"
                 sx={{
                   color: 'white',
                   fontWeight: 800,
+                  fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
                   textShadow: '0 4px 20px rgba(0,0,0,0.25)',
                   letterSpacing: '-0.02em',
                   mb: 1,
@@ -121,6 +122,7 @@ const Login = () => {
                 sx={{
                   color: 'rgba(255, 255, 255, 0.9)',
                   fontWeight: 500,
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
                   textShadow: '0 2px 10px rgba(0,0,0,0.15)',
                 }}
               >
@@ -132,12 +134,13 @@ const Login = () => {
               <Paper
                 elevation={24}
                 sx={{
-                  p: 5,
-                  borderRadius: 4,
+                  p: { xs: 3, sm: 4, md: 5 },
+                  borderRadius: { xs: 3, sm: 4 },
                   backdropFilter: 'blur(40px)',
                   background: 'rgba(255, 255, 255, 0.98)',
                   border: '1px solid rgba(99, 102, 241, 0.15)',
                   boxShadow: '0 25px 80px rgba(99, 102, 241, 0.35)',
+                  mx: { xs: 1, sm: 0 },
                 }}
               >
                 {error && (

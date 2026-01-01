@@ -111,14 +111,15 @@ export const MessageInput = ({
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          p: 2,
+          p: { xs: 1, sm: 1.5, md: 2 },
           borderTop: '1px solid #E2E8F0',
           display: 'flex',
-          gap: 1,
+          gap: { xs: 0.5, sm: 1 },
           background: 'white',
+          alignItems: 'center',
         }}
       >
-        <Box sx={{ display: 'flex', gap: 0.5, position: 'relative' }}>
+        <Box sx={{ display: 'flex', gap: { xs: 0, sm: 0.5 }, position: 'relative' }}>
           <input
             type="file"
             ref={fileInputRef}
@@ -135,39 +136,49 @@ export const MessageInput = ({
           />
           <IconButton
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            size="small"
             sx={{
               color: '#6366F1',
+              p: { xs: 0.75, sm: 1 },
+              display: { xs: 'none', sm: 'inline-flex' },
               '&:hover': { background: 'rgba(99, 102, 241, 0.1)' }
             }}
           >
-            <EmojiEmotionsIcon />
+            <EmojiEmotionsIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
           </IconButton>
           <IconButton
             onClick={() => imageInputRef.current?.click()}
+            size="small"
             sx={{
               color: '#6366F1',
+              p: { xs: 0.75, sm: 1 },
               '&:hover': { background: 'rgba(99, 102, 241, 0.1)' }
             }}
           >
-            <ImageIcon />
+            <ImageIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
           </IconButton>
           <IconButton
             onClick={() => fileInputRef.current?.click()}
+            size="small"
             sx={{
               color: '#6366F1',
+              p: { xs: 0.75, sm: 1 },
               '&:hover': { background: 'rgba(99, 102, 241, 0.1)' }
             }}
           >
-            <AttachFileIcon />
+            <AttachFileIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
           </IconButton>
           <IconButton
             onClick={onLocationClick}
+            size="small"
             sx={{
               color: '#6366F1',
+              p: { xs: 0.75, sm: 1 },
+              display: { xs: 'none', sm: 'inline-flex' },
               '&:hover': { background: 'rgba(99, 102, 241, 0.1)' }
             }}
           >
-            <LocationOnIcon />
+            <LocationOnIcon sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
           </IconButton>
 
           {showEmojiPicker && (
@@ -190,13 +201,14 @@ export const MessageInput = ({
             onTyping();
           }}
           disabled={disabled || uploading}
+          size="small"
           sx={{
             '& .MuiOutlinedInput-root': {
               backgroundColor: 'white',
-              borderRadius: 3,
-              fontSize: '1rem',
+              borderRadius: { xs: 2, sm: 3 },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               fontWeight: 500,
-              padding: '12px 16px',
+              padding: { xs: '8px 12px', sm: '12px 16px' },
               border: '2px solid #E2E8F0',
               '&:hover': {
                 backgroundColor: '#FAFBFC',
@@ -219,9 +231,10 @@ export const MessageInput = ({
         <IconButton
           type="submit"
           sx={{
-            width: 52,
-            height: 52,
-            ml: 1.5,
+            width: { xs: 40, sm: 48, md: 52 },
+            height: { xs: 40, sm: 48, md: 52 },
+            minWidth: { xs: 40, sm: 48, md: 52 },
+            ml: { xs: 0.5, sm: 1, md: 1.5 },
             background: 'linear-gradient(135deg, #6366F1 0%, #EC4899 100%)',
             color: 'white',
             boxShadow: '0 4px 12px rgba(91, 127, 255, 0.3)',
@@ -237,7 +250,7 @@ export const MessageInput = ({
           }}
           disabled={disabled || uploading || (!newMessage.trim() && !previewFile && !locationData)}
         >
-          <SendIcon sx={{ fontSize: '1.4rem' }} />
+          <SendIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.4rem' } }} />
         </IconButton>
       </Box>
     </>

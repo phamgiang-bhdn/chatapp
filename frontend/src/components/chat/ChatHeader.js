@@ -57,37 +57,39 @@ const ChatHeader = ({ user, onNotificationClick }) => {
         borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
       }}
     >
-      <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1, sm: 2, md: 3 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 40,
-              height: 40,
+              width: { xs: 32, sm: 36, md: 40 },
+              height: { xs: 32, sm: 36, md: 40 },
               borderRadius: '50%',
               background: 'rgba(255, 255, 255, 0.2)',
               backdropFilter: 'blur(10px)',
             }}
           >
-            <ChatBubbleIcon sx={{ color: 'white', fontSize: 22 }} />
+            <ChatBubbleIcon sx={{ color: 'white', fontSize: { xs: 18, sm: 20, md: 22 } }} />
           </Box>
           <Typography
             variant="h6"
             component="div"
             sx={{
               fontWeight: 700,
+              fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
               background: 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              display: { xs: 'none', sm: 'block' },
             }}
           >
             Chat App
           </Typography>
         </Box>
         <Box sx={{ flexGrow: 1 }} />
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5, md: 2 } }}>
           <NotificationBell onNotificationClick={onNotificationClick} />
           
           <IconButton
@@ -103,12 +105,12 @@ const ChatHeader = ({ user, onNotificationClick }) => {
             <Avatar
               src={user?.avatar ? `${user.avatar}?t=${Date.now()}` : null}
               sx={{
-                width: 40,
-                height: 40,
+                width: { xs: 32, sm: 36, md: 40 },
+                height: { xs: 32, sm: 36, md: 40 },
                 border: '2px solid rgba(255, 255, 255, 0.5)',
                 background: user?.avatar ? 'transparent' : 'linear-gradient(135deg, #F472B6 0%, #818CF8 100%)',
                 fontWeight: 700,
-                fontSize: '1.1rem',
+                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
                 cursor: 'pointer',
               }}
             >

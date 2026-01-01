@@ -75,27 +75,28 @@ const Register = () => {
       <Container maxWidth="sm">
         <Fade in timeout={800}>
           <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
               <Box
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 80,
-                  height: 80,
+                  width: { xs: 60, sm: 70, md: 80 },
+                  height: { xs: 60, sm: 70, md: 80 },
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, #EC4899 0%, #6366F1 100%)',
                   boxShadow: '0 8px 32px rgba(255, 107, 157, 0.4)',
-                  mb: 2,
+                  mb: { xs: 1.5, sm: 2 },
                 }}
               >
-                <PersonAdd sx={{ fontSize: 40, color: 'white' }} />
+                <PersonAdd sx={{ fontSize: { xs: 30, sm: 35, md: 40 }, color: 'white' }} />
               </Box>
               <Typography
                 variant="h4"
                 sx={{
                   color: 'white',
                   fontWeight: 700,
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' },
                   textShadow: '0 2px 10px rgba(0,0,0,0.2)',
                 }}
               >
@@ -107,11 +108,13 @@ const Register = () => {
               <Paper
                 elevation={24}
                 sx={{
-                  p: 4,
+                  p: { xs: 3, sm: 4 },
+                  borderRadius: { xs: 3, sm: 4 },
                   backdropFilter: 'blur(20px)',
                   background: 'rgba(255, 255, 255, 0.95)',
                   border: '1px solid rgba(255, 107, 157, 0.2)',
                   boxShadow: '0 20px 60px rgba(255, 107, 157, 0.3)',
+                  mx: { xs: 1, sm: 0 },
                 }}
               >
                 {error && (

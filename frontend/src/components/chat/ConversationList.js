@@ -295,7 +295,7 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF' }}>
-      <Box sx={{ p: 2, pb: 1.5, display: 'flex', gap: 1, borderBottom: '1px solid #E2E8F0' }}>
+      <Box sx={{ p: { xs: 1.5, sm: 2 }, pb: { xs: 1, sm: 1.5 }, display: 'flex', gap: 1, borderBottom: '1px solid #E2E8F0' }}>
         <TextField
           fullWidth
           size="small"
@@ -306,12 +306,16 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
             '& .MuiOutlinedInput-root': {
               backgroundColor: '#F8FAFC',
               borderRadius: 3,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               '&:hover': {
                 backgroundColor: '#EDF2F7',
               },
               '&.Mui-focused': {
                 backgroundColor: '#EDF2F7',
               },
+            },
+            '& .MuiInputBase-input': {
+              py: { xs: 1, sm: 1.25 },
             },
           }}
         />
@@ -320,6 +324,8 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
           sx={{
             background: 'linear-gradient(135deg, #6366F1 0%, #EC4899 100%)',
             color: 'white',
+            minWidth: { xs: 40, sm: 44 },
+            height: { xs: 40, sm: 44 },
             '&:hover': {
               background: 'linear-gradient(135deg, #7B9AFF 0%, #FF8BB3 100%)',
               transform: 'scale(1.05)',
@@ -389,9 +395,9 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
                       setTimeout(() => loadConversations(), 500);
                     }}
                 sx={{
-                  borderRadius: 2.5,
-                  py: 1.5,
-                  px: 2,
+                  borderRadius: { xs: 2, sm: 2.5 },
+                  py: { xs: 1, sm: 1.5 },
+                  px: { xs: 1.5, sm: 2 },
                   transition: 'all 0.2s ease',
                   border: '2px solid transparent',
                   '&.Mui-selected': {
@@ -473,13 +479,13 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
                           }
                         }}
                         sx={{
-                          width: 52,
-                          height: 52,
+                          width: { xs: 44, sm: 48, md: 52 },
+                          height: { xs: 44, sm: 48, md: 52 },
                           background: conversation.type === 'group'
                             ? 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)'
                             : (participantUsers[conversation.id]?.avatar ? 'transparent' : 'linear-gradient(135deg, #EC4899 0%, #F472B6 100%)'),
                           fontWeight: 700,
-                          fontSize: '1.3rem',
+                          fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' },
                           boxShadow: '0 2px 8px rgba(99, 102, 241, 0.2)',
                           cursor: conversation.type === 'private' && participantUsers[conversation.id]?.id ? 'pointer' : 'default',
                           transition: 'transform 0.2s',
