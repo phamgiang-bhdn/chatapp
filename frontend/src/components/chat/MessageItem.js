@@ -9,6 +9,7 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { MessageContent } from './MessageContent';
 import { MessageActions } from './MessageActions';
+import { MessageReactions } from './MessageReactions';
 
 export const MessageItem = ({
   message,
@@ -24,7 +25,9 @@ export const MessageItem = ({
   onCreateThread,
   onDownloadFile,
   onAvatarClick,
-  messageSenders
+  messageSenders,
+  onAddReaction,
+  onRemoveReaction
 }) => {
   // Fallback to messageSenders if sender is not provided
   const actualSender = sender || messageSenders?.[message.senderId] || message.sender || (isOwnMessage ? user : null);
@@ -133,6 +136,16 @@ export const MessageItem = ({
               user={user}
               onDownloadFile={onDownloadFile}
               messageSenders={messageSenders}
+            />
+            
+            {/* Message Reactions */}
+            <MessageReactions
+              reactions={message.reactions || []}
+              messageId={message.id}
+              userId={user?.id}
+              isOwnMessage={isOwnMessage}
+              onAddReaction={onAddReaction}
+              onRemoveReaction={onRemoveReaction}
             />
           </Paper>
         </Tooltip>

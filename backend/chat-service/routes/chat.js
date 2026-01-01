@@ -3,6 +3,8 @@ const router = express.Router();
 const chatController = require('../controllers/chatController');
 const notificationController = require('../controllers/notificationController');
 const uploadController = require('../controllers/uploadController');
+const reactionController = require('../controllers/reactionController');
+const scheduledMessageController = require('../controllers/scheduledMessageController');
 const authMiddleware = require('../middleware/auth');
 
 router.get('/conversations', authMiddleware, chatController.getConversations);
@@ -33,5 +35,16 @@ router.get('/conversations/:conversationId/pinned', authMiddleware, chatControll
 
 router.post('/upload', authMiddleware, uploadController.uploadFile);
 router.get('/download', authMiddleware, uploadController.downloadFile);
+
+// Reactions
+router.post('/messages/:messageId/reactions', authMiddleware, reactionController.addReaction);
+router.delete('/messages/:messageId/reactions', authMiddleware, reactionController.removeReaction);
+router.get('/messages/:messageId/reactions', authMiddleware, reactionController.getReactions);
+
+// Scheduled messages
+router.post('/scheduled-messages', authMiddleware, scheduledMessageController.createScheduledMessage);
+router.get('/scheduled-messages', authMiddleware, scheduledMessageController.getScheduledMessages);
+router.put('/scheduled-messages/:id', authMiddleware, scheduledMessageController.updateScheduledMessage);
+router.delete('/scheduled-messages/:id', authMiddleware, scheduledMessageController.cancelScheduledMessage);
 
 module.exports = router;

@@ -22,6 +22,12 @@ export const SOCKET_EVENTS = {
 
   THREAD_CREATED: 'thread_created',
 
+  // Reaction events
+  REACTION_UPDATED: 'reaction_updated',
+  
+  // Scheduled message events
+  SCHEDULED_MESSAGE_SENT: 'scheduled_message_sent',
+
   ERROR: 'error'
 };
 

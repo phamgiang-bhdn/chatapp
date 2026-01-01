@@ -3,10 +3,12 @@ const ConversationParticipant = require('../models/ConversationParticipant');
 const Message = require('../models/Message');
 const Thread = require('../models/Thread');
 const PinnedMessage = require('../models/PinnedMessage');
+const MessageReaction = require('../models/MessageReaction');
 const { Op } = require('sequelize');
 const ioInstance = require('../socket/ioInstance');
 const { SOCKET_EVENTS } = require('../constants/socketEvents');
 const axios = require('axios');
+const { getMessageReactions } = require('./reactionController');
 
 exports.getConversations = async (req, res) => {
   try {
@@ -183,6 +185,10 @@ exports.getMessages = async (req, res) => {
         console.error(`Failed to load sender ${message.senderId}:`, error);
         messageData.sender = { id: message.senderId, username: 'Unknown', fullName: 'Unknown User' };
       }
+      
+      // Get reactions for this message
+      messageData.reactions = await getMessageReactions(message.id);
+      
       return messageData;
     }));
 

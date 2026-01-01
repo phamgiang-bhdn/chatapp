@@ -13,7 +13,9 @@ export const MessageList = ({
   onReply,
   onCreateThread,
   onDownloadFile,
-  onAvatarClick
+  onAvatarClick,
+  onAddReaction,
+  onRemoveReaction
 }) => {
   const messagesEndRef = useRef(null);
 
@@ -49,6 +51,8 @@ export const MessageList = ({
               onDownloadFile={onDownloadFile}
               onAvatarClick={onAvatarClick}
               messageSenders={messageSenders}
+              onAddReaction={onAddReaction}
+              onRemoveReaction={onRemoveReaction}
             />
           </ListItem>
         );

@@ -9,6 +9,8 @@ class SocketService {
     this.onlineUsers = new Set();
     this.messageCallbacks = new Set();
     this.typingCallbacks = new Set();
+    this.reactionCallbacks = new Set();
+    this.scheduledMessageCallbacks = new Set();
   }
 
   connect(token) {
@@ -55,6 +57,8 @@ class SocketService {
       this.onlineUsers.clear();
       this.messageCallbacks.clear();
       this.typingCallbacks.clear();
+      this.reactionCallbacks.clear();
+      this.scheduledMessageCallbacks.clear();
     }
   }
 
@@ -169,6 +173,36 @@ class SocketService {
     if (this.socket) {
       this.socket.off(event, callback);
     }
+  }
+
+  onReactionUpdated(callback) {
+    if (this.socket) {
+      this.reactionCallbacks.add(callback);
+      
+      this.socket.off(SOCKET_EVENTS.REACTION_UPDATED);
+      this.socket.on(SOCKET_EVENTS.REACTION_UPDATED, (data) => {
+        this.reactionCallbacks.forEach(cb => cb(data));
+      });
+    }
+    
+    return () => {
+      this.reactionCallbacks.delete(callback);
+    };
+  }
+
+  onScheduledMessageSent(callback) {
+    if (this.socket) {
+      this.scheduledMessageCallbacks.add(callback);
+      
+      this.socket.off(SOCKET_EVENTS.SCHEDULED_MESSAGE_SENT);
+      this.socket.on(SOCKET_EVENTS.SCHEDULED_MESSAGE_SENT, (data) => {
+        this.scheduledMessageCallbacks.forEach(cb => cb(data));
+      });
+    }
+    
+    return () => {
+      this.scheduledMessageCallbacks.delete(callback);
+    };
   }
 }
 

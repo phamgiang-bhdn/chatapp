@@ -5,6 +5,7 @@ const cors = require('cors');
 const sequelize = require('./config/database');
 const chatRoutes = require('./routes/chat');
 const socketHandler = require('./socket/socketHandler');
+const { startScheduler } = require('./scheduler/messageScheduler');
 require('dotenv').config();
 
 const app = express();
@@ -50,6 +51,9 @@ const startServer = async () => {
     console.log('Database connection established successfully.');
 
     console.log('Using migration-managed database schema.');
+
+    // Start scheduled message scheduler
+    startScheduler();
 
     server.listen(PORT, () => {
       console.log(`Chat Service is running on port ${PORT}`);

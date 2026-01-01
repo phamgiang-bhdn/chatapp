@@ -123,5 +123,54 @@ export const chatService = {
   getPinnedMessages: async (conversationId) => {
     const response = await api.get(`/api/chat/conversations/${conversationId}/pinned`);
     return response.data;
+  },
+
+  // Reactions
+  addReaction: async (messageId, emoji) => {
+    const response = await api.post(`/api/chat/messages/${messageId}/reactions`, { emoji });
+    return response.data;
+  },
+
+  removeReaction: async (messageId, emoji) => {
+    const response = await api.delete(`/api/chat/messages/${messageId}/reactions`, { 
+      data: { emoji } 
+    });
+    return response.data;
+  },
+
+  getReactions: async (messageId) => {
+    const response = await api.get(`/api/chat/messages/${messageId}/reactions`);
+    return response.data;
+  },
+
+  // Scheduled Messages
+  createScheduledMessage: async (conversationId, content, scheduledAt, type = 'text', fileUrl = null) => {
+    const response = await api.post('/api/chat/scheduled-messages', {
+      conversationId,
+      content,
+      type,
+      fileUrl,
+      scheduledAt
+    });
+    return response.data;
+  },
+
+  getScheduledMessages: async (conversationId = null) => {
+    const params = conversationId ? { conversationId } : {};
+    const response = await api.get('/api/chat/scheduled-messages', { params });
+    return response.data;
+  },
+
+  updateScheduledMessage: async (id, content, scheduledAt) => {
+    const response = await api.put(`/api/chat/scheduled-messages/${id}`, {
+      content,
+      scheduledAt
+    });
+    return response.data;
+  },
+
+  cancelScheduledMessage: async (id) => {
+    const response = await api.delete(`/api/chat/scheduled-messages/${id}`);
+    return response.data;
   }
 };

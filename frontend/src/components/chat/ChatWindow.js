@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import PushPinIcon from '@mui/icons-material/PushPin';
@@ -43,8 +43,16 @@ const ChatWindow = ({ conversation, onBack }) => {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showConfirmLeave, setShowConfirmLeave] = useState(false);
 
+  // State for messages with reactions
+  const [localMessages, setLocalMessages] = useState([]);
+  
   // Custom hooks
   const { messages, messageSenders, loadMessages, setMessageSenders, loadAllUsers } = useChatMessages(conversation, user);
+  
+  // Sync local messages with hook messages
+  useEffect(() => {
+    setLocalMessages(messages);
+  }, [messages]);
   const { 
     threads, 
     threadMessages, 
@@ -365,6 +373,57 @@ const ChatWindow = ({ conversation, onBack }) => {
     setShowUserProfile(true);
   };
 
+  // Reaction handlers
+  const handleAddReaction = useCallback(async (messageId, emoji) => {
+    try {
+      const result = await chatService.addReaction(messageId, emoji);
+      // Update local messages with new reactions
+      setLocalMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, reactions: result.allReactions } : msg
+      ));
+    } catch (error) {
+      console.error('Failed to add reaction:', error);
+      if (error.response?.status !== 400) {
+        showError('Không thể thêm reaction');
+      }
+    }
+  }, [showError]);
+
+  const handleRemoveReaction = useCallback(async (messageId, emoji) => {
+    try {
+      const result = await chatService.removeReaction(messageId, emoji);
+      // Update local messages with new reactions
+      setLocalMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, reactions: result.allReactions } : msg
+      ));
+    } catch (error) {
+      console.error('Failed to remove reaction:', error);
+      showError('Không thể xóa reaction');
+    }
+  }, [showError]);
+
+  // Listen for reaction updates from socket
+  useEffect(() => {
+    if (!conversation) return;
+
+    const handleReactionUpdated = (data) => {
+      if (data.conversationId === conversation.id) {
+        setLocalMessages(prev => prev.map(msg => 
+          msg.id === data.messageId ? { ...msg, reactions: data.reactions } : msg
+        ));
+      }
+    };
+
+    const unsubscribe = socketService.onReactionUpdated(handleReactionUpdated);
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [conversation?.id]);
+
+
   if (!conversation) {
     return (
       <Box
@@ -462,7 +521,7 @@ const ChatWindow = ({ conversation, onBack }) => {
         )}
 
         <MessageList
-          messages={conversation.threadId ? threadMessages : messages}
+          messages={conversation.threadId ? threadMessages : localMessages}
           messageSenders={conversation.threadId ? threadSenders : messageSenders}
           user={user}
           pinnedMessages={pinnedMessages}
@@ -473,6 +532,8 @@ const ChatWindow = ({ conversation, onBack }) => {
           onCreateThread={handleCreateThreadClick}
           onDownloadFile={handleDownloadFile}
           onAvatarClick={handleAvatarClick}
+          onAddReaction={handleAddReaction}
+          onRemoveReaction={handleRemoveReaction}
         />
                   </Box>
 
@@ -574,6 +635,7 @@ const ChatWindow = ({ conversation, onBack }) => {
         cancelText="Hủy"
         severity="warning"
       />
+
     </Box>
   );
 };

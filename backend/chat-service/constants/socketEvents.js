@@ -14,7 +14,13 @@ const SOCKET_EVENTS = {
   USER_TYPING: 'user_typing',
   NOTIFICATION: 'notification',
   THREAD_CREATED: 'thread_created',
-  ERROR: 'error'
+  ERROR: 'error',
+  // Reaction events
+  ADD_REACTION: 'add_reaction',
+  REMOVE_REACTION: 'remove_reaction',
+  REACTION_UPDATED: 'reaction_updated',
+  // Scheduled message events
+  SCHEDULED_MESSAGE_SENT: 'scheduled_message_sent'
 };
 
 const USER_STATUS = {
