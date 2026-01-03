@@ -34,10 +34,20 @@ module.exports = {
       }
     });
 
-    await queryInterface.addIndex('user_follows', ['followerId', 'followingId'], {
-      name: 'unique_follow',
-      unique: true
-    });
+    // Check if index already exists before adding
+    const [results] = await queryInterface.sequelize.query(
+      `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.STATISTICS 
+       WHERE TABLE_SCHEMA = DATABASE() 
+       AND TABLE_NAME = 'user_follows' 
+       AND INDEX_NAME = 'unique_follow'`
+    );
+    
+    if (results[0].count === 0) {
+      await queryInterface.addIndex('user_follows', ['followerId', 'followingId'], {
+        name: 'unique_follow',
+        unique: true
+      });
+    }
   }, down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('user_follows');
   }

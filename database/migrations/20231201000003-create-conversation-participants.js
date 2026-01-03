@@ -61,10 +61,20 @@ module.exports = {
       }
     });
 
-    await queryInterface.addIndex('conversation_participants', ['conversationId', 'userId'], {
-      name: 'unique_participant',
-      unique: true
-    });
+    // Check if index already exists before adding
+    const [results] = await queryInterface.sequelize.query(
+      `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.STATISTICS 
+       WHERE TABLE_SCHEMA = DATABASE() 
+       AND TABLE_NAME = 'conversation_participants' 
+       AND INDEX_NAME = 'unique_participant'`
+    );
+    
+    if (results[0].count === 0) {
+      await queryInterface.addIndex('conversation_participants', ['conversationId', 'userId'], {
+        name: 'unique_participant',
+        unique: true
+      });
+    }
   }, down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('conversation_participants');
   }
