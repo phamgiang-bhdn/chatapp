@@ -54,3 +54,4 @@ ScheduledMessage.belongsTo(Conversation, { foreignKey: 'conversationId' });
 
 module.exports = ScheduledMessage;
 
+

@@ -40,3 +40,4 @@ MessageReaction.belongsTo(Message, { foreignKey: 'messageId' });
 
 module.exports = MessageReaction;
 
+
