@@ -2,6 +2,213 @@
 
 Hệ thống chat real-time với follow system, group chat, và thông báo được xây dựng với kiến trúc microservices.
 
+## ⚡ Quick Start (Tóm tắt nhanh)
+
+```bash
+# 1. Đảm bảo Docker Desktop đang chạy
+# 2. Clone repository và vào thư mục
+cd chat
+
+# 3. (Tùy chọn) Tạo file .env với Cloudinary credentials
+# Xem chi tiết ở Bước 3 bên dưới
+
+# 4. Khởi động ứng dụng
+npm start
+
+# 5. Đợi ~2-3 phút, sau đó chạy migration
+npm run migrate
+
+# 6. (Tùy chọn) Chạy seeder để có dữ liệu test
+npm run seed:force
+
+# 7. Mở http://localhost:9000
+```
+
+**Xem hướng dẫn chi tiết bên dưới nếu gặp vấn đề.**
+
+---
+
+## 📋 Yêu cầu hệ thống
+
+Trước khi bắt đầu, đảm bảo bạn đã cài đặt:
+
+- ✅ **Docker Desktop** - [Tải về](https://www.docker.com/products/docker-desktop)
+  - Bắt buộc để chạy ứng dụng
+  - Sau khi cài, khởi động Docker Desktop và đợi đến khi trạng thái hiển thị "Running"
+  
+- ✅ **Node.js >= 14** - [Tải về](https://nodejs.org/)
+  - Cần để chạy các npm scripts (start, migrate, seed, v.v.)
+  - Kiểm tra: `node --version`
+  
+- ✅ **Git** - Để clone repository (nếu chưa có code)
+
+## 🚀 Hướng dẫn cài đặt và chạy (Cho người mới clone)
+
+### Bước 1: Clone repository (nếu chưa có)
+
+```bash
+git clone <repository-url>
+cd chat
+```
+
+### Bước 2: Cài đặt Docker Desktop
+
+1. Tải Docker Desktop từ: https://www.docker.com/products/docker-desktop
+2. Cài đặt và khởi động Docker Desktop
+3. Đợi đến khi biểu tượng Docker hiển thị trạng thái "Running"
+4. Kiểm tra Docker đã hoạt động:
+   ```bash
+   docker --version
+   docker-compose --version
+   ```
+
+### Bước 3: Cấu hình Cloudinary (Tùy chọn nhưng khuyến nghị)
+
+Hệ thống sử dụng Cloudinary để lưu trữ hình ảnh và file. Nếu không cấu hình, tính năng upload sẽ bị lỗi.
+
+1. Đăng ký tài khoản miễn phí tại: https://cloudinary.com/users/register/free
+2. Vào Dashboard, copy các thông tin sau:
+   - **Cloud Name**
+   - **API Key**
+   - **API Secret**
+
+3. Tạo file `.env` trong thư mục gốc (cùng cấp với `docker-compose.yml`):
+   ```bash
+   # Windows (PowerShell)
+   New-Item .env
+   
+   # Linux/Mac
+   touch .env
+   ```
+
+4. Thêm nội dung sau vào file `.env`:
+   ```env
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
+
+   **Lưu ý**: Thay `your_cloud_name`, `your_api_key`, `your_api_secret` bằng thông tin thực tế từ Cloudinary Dashboard.
+
+### Bước 4: Khởi động ứng dụng
+
+**Lưu ý**: Nếu chưa cài Node.js, bạn vẫn có thể chạy trực tiếp với Docker Compose (xem Cách 2).
+
+#### Cách 1: Sử dụng NPM script (Khuyến nghị - Cần Node.js)
+
+```bash
+npm start
+```
+
+Script này sẽ tự động:
+- ✅ Kiểm tra Docker đang chạy
+- ✅ Build Docker images
+- ✅ Khởi động tất cả services
+- ✅ Hiển thị trạng thái và URLs
+
+**Nếu chưa cài Node.js**, cài đặt dependencies ở thư mục gốc trước:
+```bash
+npm install
+```
+
+#### Cách 2: Chạy trực tiếp với Docker Compose (Không cần Node.js)
+
+```bash
+# Build và khởi động tất cả services
+docker-compose up -d --build
+```
+
+**Lưu ý**: 
+- Lần đầu chạy nên dùng `--build` để đảm bảo images được build đúng
+- `-d` flag chạy services ở chế độ background
+- Nếu dùng cách này, bạn sẽ cần chạy migration thủ công (xem Bước 6)
+
+### Bước 5: Đợi services khởi động
+
+- ⏱️ **Lần đầu**: ~2-3 phút (tải images, build)
+- ⏱️ **Các lần sau**: ~30-60 giây
+- ⏱️ **MySQL**: Cần đợi khoảng 30-60 giây để khởi động hoàn toàn
+
+Kiểm tra trạng thái services:
+```bash
+npm run status
+# hoặc
+docker-compose ps
+```
+
+### Bước 6: Chạy Database Migration (Bắt buộc!)
+
+Sau khi MySQL đã khởi động hoàn toàn (đợi ít nhất 60 giây), chạy migration để tạo các bảng trong database:
+
+**Cách 1: Dùng npm script (Cần Node.js)**
+```bash
+npm run migrate
+```
+
+**Cách 2: Chạy thủ công trong container**
+```bash
+# Vào container database
+docker exec -it chat-mysql bash
+
+# Hoặc chạy trực tiếp từ host (nếu đã cài sequelize-cli)
+cd database
+npm install
+npm run migrate
+```
+
+**Lưu ý quan trọng**: 
+- ⚠️ Migration **PHẢI** chạy sau khi MySQL đã sẵn sàng (đợi ít nhất 60 giây sau `docker-compose up`)
+- ⚠️ Nếu thấy lỗi "Connection refused" hoặc "ECONNREFUSED", đợi thêm 30-60 giây rồi thử lại
+- ✅ Migration chỉ cần chạy một lần sau khi khởi động lần đầu
+- ✅ Kiểm tra MySQL đã sẵn sàng: `docker-compose logs mysql | grep "ready for connections"`
+
+### Bước 7: Chạy Seeder (Tùy chọn - Khuyến nghị cho lần đầu)
+
+Để có dữ liệu mẫu để test, chạy seeder:
+
+**Cách 1: Dùng npm script (Cần Node.js)**
+```bash
+npm run seed
+```
+
+Hoặc chạy không cần xác nhận:
+```bash
+npm run seed:force
+```
+
+**Cách 2: Chạy thủ công**
+```bash
+node scripts/seed.js --force
+```
+
+Seeder sẽ tạo 8 tài khoản test (xem thông tin đăng nhập ở phần [Test Accounts](#-test-accounts-sau-khi-chạy-seed))
+
+**Lưu ý**: Seeder chỉ chạy được sau khi đã chạy migration thành công.
+
+### Bước 8: Mở ứng dụng
+
+Truy cập: **http://localhost:9000**
+
+🎉 **Xong!** Bạn đã sẵn sàng sử dụng ứng dụng chat.
+
+---
+
+### ✅ Checklist cài đặt
+
+Sử dụng checklist này để đảm bảo bạn đã hoàn thành tất cả các bước:
+
+- [ ] Đã cài đặt Docker Desktop và đang chạy
+- [ ] Đã cài đặt Node.js >= 14 (nếu muốn dùng npm scripts)
+- [ ] Đã clone repository và vào thư mục `chat`
+- [ ] (Tùy chọn) Đã tạo file `.env` với Cloudinary credentials
+- [ ] Đã chạy `npm start` hoặc `docker-compose up -d --build`
+- [ ] Đã đợi MySQL khởi động hoàn toàn (ít nhất 60 giây)
+- [ ] Đã chạy `npm run migrate` thành công
+- [ ] (Tùy chọn) Đã chạy `npm run seed:force` để có dữ liệu test
+- [ ] Đã mở http://localhost:9000 và thấy giao diện đăng nhập
+
+---
+
 ## 🏗️ Kiến trúc
 
 ### Backend (Node.js + MySQL)
@@ -12,98 +219,6 @@ Hệ thống chat real-time với follow system, group chat, và thông báo đ�
 
 ### Frontend (React.js)
 - React 18 + Material-UI + Socket.IO Client
-
-## 📋 Yêu cầu
-
-- **Docker Desktop** (khuyến nghị)
-- Node.js >= 14 (cho scripts)
-- **Cloudinary Account** (miễn phí) - để upload hình ảnh và file
-
-## 🚀 Cài đặt và Chạy
-
-### Bước 1: Cài đặt Docker Desktop
-- Tải từ https://www.docker.com/products/docker-desktop
-- Cài đặt và khởi động Docker Desktop
-- Đợi đến khi biểu tượng Docker hiển thị "Running"
-
-### Bước 1.5: Cấu hình Cloudinary (Tùy chọn nhưng khuyến nghị)
-
-Hệ thống sử dụng Cloudinary để lưu trữ hình ảnh và file. Nếu không cấu hình, upload sẽ bị lỗi.
-
-1. Đăng ký tài khoản miễn phí tại: https://cloudinary.com/users/register/free
-2. Vào Dashboard, copy các thông tin sau:
-   - Cloud Name
-   - API Key
-   - API Secret
-
-3. Tạo file `.env` trong thư mục gốc (cùng cấp với docker-compose.yml) hoặc thêm vào file `.env` hiện có:
-```env
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-```
-
-**Lưu ý**: Docker Compose sẽ tự động đọc file `.env` trong cùng thư mục.
-
-### Bước 2: Chạy ứng dụng
-
-#### Cách 1: Sử dụng NPM script (Khuyến nghị)
-```bash
-npm start
-```
-
-Script này sẽ:
-- Kiểm tra Docker đang chạy
-- Build Docker images
-- Khởi động tất cả services
-- Hiển thị trạng thái và URLs
-
-#### Cách 2: Chạy trực tiếp với Docker Compose
-Nếu muốn chạy trực tiếp với docker-compose:
-
-```bash
-# Build và khởi động tất cả services
-docker-compose up -d --build
-
-# Hoặc chỉ khởi động (không build lại)
-docker-compose up -d
-```
-
-**Lưu ý**: 
-- `-d` flag chạy services ở chế độ background (detached mode)
-- `--build` flag build lại images trước khi khởi động
-- Lần đầu chạy nên dùng `--build` để đảm bảo images được build đúng
-
-### Bước 3: Đợi khởi động
-- Lần đầu: ~2-3 phút (tải images, build)
-- Các lần sau: ~30 giây
-- Đợi MySQL khởi động hoàn toàn (khoảng 30-60 giây)
-
-### Bước 4: Chạy Migration (Quan trọng!)
-Sau khi MySQL đã khởi động, chạy migration để tạo các bảng trong database:
-
-```bash
-npm run migrate
-```
-
-**Lưu ý**: 
-- Migration chỉ cần chạy một lần sau khi khởi động lần đầu
-- Nếu đã chạy migration trước đó, có thể bỏ qua bước này
-
-### Bước 5: Chạy Seeder (Tùy chọn)
-Để có dữ liệu mẫu để test, chạy seeder:
-
-```bash
-npm run seed
-```
-
-Hoặc chạy không cần xác nhận:
-```bash
-npm run seed:force
-```
-
-### Bước 6: Mở trình duyệt
-Truy cập: **http://localhost:9000**
 
 ## 🛑 Dừng ứng dụng
 
@@ -241,16 +356,26 @@ docker exec -it chat-mysql mysql -uroot -proot_password_123 chat_app
 ```
 
 ### Test Accounts (sau khi chạy seed)
-Tất cả accounts có password: `12345678`
 
-- user01 / user01@example.com (Nguyễn Văn An)
-- user02 / user02@example.com (Trần Thị Bình)
-- user03 / user03@example.com (Lê Văn Cường)
-- user04 / user04@example.com (Phạm Thị Dung)
-- user05 / user05@example.com (Hoàng Văn Đức)
-- user06 / user06@example.com (Vũ Thị Em)
-- user07 / user07@example.com (Đỗ Văn Phong)
-- user08 / user08@example.com (Bùi Thị Giang)
+Sau khi chạy `npm run seed`, bạn sẽ có 8 tài khoản test để đăng nhập:
+
+**Tất cả accounts có password:** `12345678`
+
+| Username | Email | Tên |
+|----------|-------|-----|
+| user01 | user01@example.com | Nguyễn Văn An |
+| user02 | user02@example.com | Trần Thị Bình |
+| user03 | user03@example.com | Lê Văn Cường |
+| user04 | user04@example.com | Phạm Thị Dung |
+| user05 | user05@example.com | Hoàng Văn Đức |
+| user06 | user06@example.com | Vũ Thị Em |
+| user07 | user07@example.com | Đỗ Văn Phong |
+| user08 | user08@example.com | Bùi Thị Giang |
+
+**Cách sử dụng:**
+1. Mở http://localhost:9000
+2. Đăng nhập với bất kỳ tài khoản nào ở trên
+3. Bắt đầu chat!
 
 ## 🚀 Cách sử dụng
 
@@ -330,33 +455,106 @@ Tất cả accounts có password: `12345678`
 ## 🐛 Troubleshooting
 
 ### Docker không khởi động?
-- Kiểm tra Docker Desktop đã chạy: `docker --version`
-- Xem logs: `npm run logs`
+```bash
+# Kiểm tra Docker đã cài đặt
+docker --version
+docker-compose --version
+
+# Kiểm tra Docker Desktop đang chạy
+docker info
+
+# Nếu lỗi, khởi động Docker Desktop và đợi đến khi "Running"
+```
 
 ### Port đã được sử dụng?
-```bash
-# Windows - tìm và kill process
+
+**Windows (PowerShell):**
+```powershell
+# Tìm process đang dùng port 9000
 netstat -ano | findstr :9000
+
+# Kill process (thay <PID> bằng số PID tìm được)
 taskkill /PID <PID> /F
 ```
 
+**Linux/Mac:**
+```bash
+# Tìm và kill process
+lsof -ti:9000 | xargs kill -9
+```
+
 ### MySQL không kết nối được?
-- Đợi MySQL khởi động hoàn toàn (khoảng 30-60 giây)
-- Xem logs: `docker-compose logs mysql`
-- Restart: `docker-compose restart mysql`
+```bash
+# Đợi MySQL khởi động hoàn toàn (khoảng 30-60 giây)
+# Xem logs để kiểm tra
+npm run logs:mysql
+
+# Nếu vẫn lỗi, restart MySQL
+npm run restart:mysql
+
+# Đợi thêm 30 giây rồi thử lại migration
+npm run migrate
+```
+
+### Migration bị lỗi "Connection refused"?
+- ⏱️ Đợi MySQL khởi động hoàn toàn (ít nhất 60 giây sau khi `docker-compose up`)
+- Kiểm tra MySQL đã sẵn sàng:
+  ```bash
+  docker-compose logs mysql | grep "ready for connections"
+  ```
+- Thử lại migration:
+  ```bash
+  npm run migrate
+  ```
 
 ### Frontend không load?
-- Clear browser cache (Ctrl+Shift+R)
-- Kiểm tra backend: `npm run status`
-- Xem logs: `npm run logs:frontend`
+```bash
+# 1. Clear browser cache (Ctrl+Shift+R hoặc Cmd+Shift+R)
+# 2. Kiểm tra backend services
+npm run status
+
+# 3. Xem logs frontend
+npm run logs:frontend
+
+# 4. Restart frontend
+npm run restart:frontend
+```
 
 ### Services không khởi động?
 ```bash
 # Xem logs để tìm lỗi
 npm run logs
 
-# Restart tất cả
+# Hoặc xem logs từng service
+npm run logs:frontend
+npm run logs:api-gateway
+npm run logs:auth
+npm run logs:user
+npm run logs:chat
+
+# Restart tất cả services
 npm run restart
+
+# Nếu vẫn lỗi, rebuild lại
+docker-compose down
+docker-compose up -d --build
+```
+
+### Lỗi "Cannot find module" hoặc "npm install"?
+Nếu gặp lỗi khi chạy scripts, cài đặt dependencies ở thư mục gốc:
+```bash
+npm install
+```
+
+### Xóa toàn bộ và bắt đầu lại
+```bash
+# Dừng và xóa tất cả containers, volumes (bao gồm cả database)
+docker-compose down -v
+
+# Khởi động lại từ đầu
+npm start
+npm run migrate
+npm run seed:force
 ```
 
 ## 📁 Cấu trúc dự án
