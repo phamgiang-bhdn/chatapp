@@ -149,7 +149,7 @@ const GroupMembersDialog = ({ open, onClose, conversation, onAvatarClick }) => {
                 >
                   <ListItemAvatar>
                     <Avatar
-                      src={memberUser?.avatar ? `${memberUser.avatar}?t=${Date.now()}` : null}
+                      src={memberUser?.avatar || null}
                       onClick={() => onAvatarClick && onAvatarClick(member.userId)}
                       sx={{
                         background: memberUser?.avatar 

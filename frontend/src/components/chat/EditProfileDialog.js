@@ -99,11 +99,7 @@ const EditProfileDialog = ({ open, onClose, onProfileUpdated }) => {
       setSuccess('Cập nhật profile thành công!');
       
       if (updateUser && data.user) {
-        const updatedUser = {
-          ...data.user,
-          avatar: data.user.avatar ? `${data.user.avatar}?t=${Date.now()}` : data.user.avatar
-        };
-        updateUser(updatedUser);
+        updateUser(data.user);
       }
       
       if (onProfileUpdated) {

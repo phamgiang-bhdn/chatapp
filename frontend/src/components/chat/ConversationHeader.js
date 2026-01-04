@@ -80,7 +80,7 @@ export const ConversationHeader = ({
             </IconButton>
           )}
           <Avatar
-            src={conversation.type === 'group' ? null : (otherUser?.avatar ? `${otherUser.avatar}?t=${Date.now()}` : null)}
+            src={conversation.type === 'group' ? null : (otherUser?.avatar || null)}
             onClick={() => {
               if (conversation.type === 'direct' && conversation.otherUserId) {
                 onAvatarClick(conversation.otherUserId);

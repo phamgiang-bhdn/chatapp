@@ -470,7 +470,7 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
                       }}
                     >
                       <Avatar
-                        src={conversation.type === 'group' ? null : (participantUsers[conversation.id]?.avatar ? `${participantUsers[conversation.id].avatar}?t=${Date.now()}` : null)}
+                        src={conversation.type === 'group' ? null : (participantUsers[conversation.id]?.avatar || null)}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (conversation.type === 'private' && participantUsers[conversation.id]?.id) {
@@ -787,7 +787,7 @@ const ConversationList = ({ selectedConversation, onSelectConversation, onConver
                       }}
                     >
                       <Avatar
-                        src={user.avatar ? `${user.avatar}?t=${Date.now()}` : null}
+                        src={user.avatar || null}
                         onClick={(e) => {
                           e.stopPropagation();
                           setViewingUserId(user.id);

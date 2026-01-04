@@ -22,12 +22,13 @@ export const chatService = {
     return response.data;
   },
 
-  sendMessage: async (conversationId, content, type = 'text', fileUrl = null) => {
+  sendMessage: async (conversationId, content, type = 'text', fileUrl = null, mentionedUserIds = []) => {
     const response = await api.post('/api/chat/messages', {
       conversationId,
       content,
       type,
-      fileUrl
+      fileUrl,
+      mentionedUserIds
     });
     return response.data;
   },

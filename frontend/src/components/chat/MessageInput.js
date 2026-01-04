@@ -9,6 +9,7 @@ import { EmojiPicker } from './EmojiPicker';
 import { ReplyPreview } from './ReplyPreview';
 import { FilePreview } from './FilePreview';
 import { LocationPreviewInput } from './LocationPreviewInput';
+import { MentionAutocomplete } from './MentionAutocomplete';
 
 export const MessageInput = ({
   newMessage,
@@ -26,10 +27,16 @@ export const MessageInput = ({
   onFileSelect,
   onImageSelect,
   onLocationClick,
-  removePreview
+  removePreview,
+  members = [],
+  currentUserId
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionPosition, setMentionPosition] = useState(null);
   const emojiPickerRef = useRef(null);
+  const inputRef = useRef(null);
+  const mentionStartRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -48,6 +55,58 @@ export const MessageInput = ({
       };
     }
   }, [showEmojiPicker]);
+
+  // Handle mention detection
+  const handleMentionDetection = (value, cursorPos) => {
+    // Find @ symbol before cursor
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+      // Check if there's a space after @ (meaning mention is complete)
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+        mentionStartRef.current = lastAtIndex;
+        const searchTerm = textAfterAt;
+        setMentionSearch(searchTerm);
+        
+        // Calculate position for autocomplete
+        if (inputRef.current) {
+          const rect = inputRef.current.getBoundingClientRect();
+          setMentionPosition({
+            bottom: `${window.innerHeight - rect.top + 8}px`,
+            left: `${rect.left}px`
+          });
+        }
+        return;
+      }
+    }
+    
+    setMentionSearch('');
+    setMentionPosition(null);
+    mentionStartRef.current = null;
+  };
+
+  const handleMentionSelect = (user) => {
+    if (mentionStartRef.current !== null && inputRef.current) {
+      const beforeMention = newMessage.substring(0, mentionStartRef.current);
+      const afterMention = newMessage.substring(inputRef.current.selectionStart);
+      const newText = `${beforeMention}@${user.id} ${afterMention}`;
+      setNewMessage(newText);
+      setMentionSearch('');
+      setMentionPosition(null);
+      mentionStartRef.current = null;
+      
+      // Focus back to input
+      setTimeout(() => {
+        if (inputRef.current) {
+          const newCursorPos = mentionStartRef.current + `@${user.id} `.length;
+          inputRef.current.focus();
+          inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      }, 0);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -193,12 +252,42 @@ export const MessageInput = ({
         </Box>
 
         <TextField
+          inputRef={inputRef}
           fullWidth
-          placeholder="Nhập tin nhắn..."
+          placeholder="Nhập tin nhắn... (Gõ @ để mention)"
           value={newMessage}
           onChange={(e) => {
-            setNewMessage(e.target.value);
+            const value = e.target.value;
+            setNewMessage(value);
             onTyping();
+            
+            // Handle mention detection
+            requestAnimationFrame(() => {
+              if (inputRef.current) {
+                const cursorPos = inputRef.current.selectionStart || value.length;
+                handleMentionDetection(value, cursorPos);
+              }
+            });
+          }}
+          onKeyUp={(e) => {
+            // Update mention detection on key up (for cursor position)
+            if (inputRef.current) {
+              const cursorPos = inputRef.current.selectionStart || newMessage.length;
+              handleMentionDetection(newMessage, cursorPos);
+            }
+          }}
+          onKeyDown={(e) => {
+            // Handle @ key press
+            if (e.key === '@' || (e.key === '2' && e.shiftKey)) {
+              // Let the @ be inserted first, then detect
+              setTimeout(() => {
+                if (inputRef.current) {
+                  const value = inputRef.current.value;
+                  const cursorPos = inputRef.current.selectionStart || value.length;
+                  handleMentionDetection(value, cursorPos);
+                }
+              }, 10);
+            }
           }}
           disabled={disabled || uploading}
           size="small"
@@ -253,6 +342,16 @@ export const MessageInput = ({
           <SendIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.4rem' } }} />
         </IconButton>
       </Box>
+
+      {mentionSearch && members.length > 0 && (
+        <MentionAutocomplete
+          users={members}
+          searchTerm={mentionSearch}
+          onSelect={handleMentionSelect}
+          position={mentionPosition}
+          currentUserId={currentUserId}
+        />
+      )}
     </>
   );
 };

@@ -119,7 +119,7 @@ export const ThreadsDrawer = ({
                   const sender = message.sender || threadSenders[message.senderId] || (message.senderId === user.id ? user : null);
                   const senderName = sender?.fullName || sender?.username || 'Unknown';
                   const isOwnMessage = message.senderId === user.id;
-                  const avatarUrl = sender?.avatar ? `${sender.avatar}?t=${Date.now()}` : null;
+                  const avatarUrl = sender?.avatar || null;
                   const avatarInitial = (sender?.fullName || sender?.username || 'U').charAt(0).toUpperCase();
                   
                   return (
@@ -171,7 +171,7 @@ export const ThreadsDrawer = ({
                       >
                         {isOwnMessage && (
                           <Avatar
-                            src={user?.avatar ? `${user.avatar}?t=${Date.now()}` : null}
+                            src={user?.avatar || null}
                             onClick={() => onAvatarClick && onAvatarClick(user.id)}
                             sx={{
                               width: 24,

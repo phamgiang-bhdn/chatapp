@@ -103,7 +103,7 @@ const ChatHeader = ({ user, onNotificationClick }) => {
             }}
           >
             <Avatar
-              src={user?.avatar ? `${user.avatar}?t=${Date.now()}` : null}
+              src={user?.avatar || null}
               sx={{
                 width: { xs: 32, sm: 36, md: 40 },
                 height: { xs: 32, sm: 36, md: 40 },

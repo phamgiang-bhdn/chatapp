@@ -31,7 +31,7 @@ export const MessageItem = ({
 }) => {
   // Fallback to messageSenders if sender is not provided
   const actualSender = sender || messageSenders?.[message.senderId] || message.sender || (isOwnMessage ? user : null);
-  const avatarUrl = actualSender?.avatar ? `${actualSender.avatar}?t=${Date.now()}` : null;
+  const avatarUrl = actualSender?.avatar || null;
   const displayName = actualSender?.fullName || actualSender?.username || 'U';
   const avatarInitial = displayName.charAt(0).toUpperCase();
   

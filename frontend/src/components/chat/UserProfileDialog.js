@@ -122,7 +122,7 @@ const UserProfileDialog = ({ open, onClose, userId, onStartChat }) => {
       <DialogContent>
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Avatar
-            src={userProfile.avatar ? `${userProfile.avatar}?t=${Date.now()}` : null}
+            src={userProfile.avatar || null}
             sx={{ 
               width: 100, 
               height: 100, 

@@ -58,4 +58,9 @@ Message.belongsTo(Message, { foreignKey: 'replyToId', as: 'replyTo' });
 Conversation.hasMany(Message, { foreignKey: 'conversationId', as: 'messages' });
 Message.belongsTo(Conversation, { foreignKey: 'conversationId' });
 
+// Define MessageMention associations after Message is defined to avoid circular dependency
+const MessageMention = require('./MessageMention');
+Message.hasMany(MessageMention, { foreignKey: 'messageId', as: 'mentions' });
+MessageMention.belongsTo(Message, { foreignKey: 'messageId' });
+
 module.exports = Message;

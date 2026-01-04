@@ -4,6 +4,8 @@ const Message = require('../models/Message');
 const Thread = require('../models/Thread');
 const PinnedMessage = require('../models/PinnedMessage');
 const MessageReaction = require('../models/MessageReaction');
+const MessageMention = require('../models/MessageMention');
+const Notification = require('../models/Notification');
 const { Op } = require('sequelize');
 const ioInstance = require('../socket/ioInstance');
 const { SOCKET_EVENTS } = require('../constants/socketEvents');
@@ -157,12 +159,20 @@ exports.getMessages = async (req, res) => {
         conversationId,
         threadId: null
       },
-      include: [{
-        model: Message,
-        as: 'replyTo',
-        required: false,
-        attributes: ['id', 'content', 'type', 'senderId']
-      }],
+      include: [
+        {
+          model: Message,
+          as: 'replyTo',
+          required: false,
+          attributes: ['id', 'content', 'type', 'senderId']
+        },
+        {
+          model: MessageMention,
+          as: 'mentions',
+          required: false,
+          attributes: ['userId']
+        }
+      ],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
       offset: parseInt(offset)
@@ -189,6 +199,36 @@ exports.getMessages = async (req, res) => {
       // Get reactions for this message
       messageData.reactions = await getMessageReactions(message.id);
       
+      // Get mentioned user info
+      if (messageData.mentions && messageData.mentions.length > 0) {
+        const mentionedUserIds = messageData.mentions.map(m => m.userId);
+        messageData.mentionedUserIds = mentionedUserIds;
+        
+        // Optionally fetch mentioned user details
+        try {
+          const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3003';
+          const mentionedUsersPromises = mentionedUserIds.map(async (mentionedUserId) => {
+            try {
+              const response = await axios.get(`${userServiceUrl}/api/users/${mentionedUserId}`, {
+                headers: {
+                  'Authorization': req.headers.authorization || ''
+                }
+              });
+              return response.data.user;
+            } catch (error) {
+              return { id: mentionedUserId, username: 'Unknown', fullName: 'Unknown User' };
+            }
+          });
+          messageData.mentionedUsers = await Promise.all(mentionedUsersPromises);
+        } catch (error) {
+          console.error('Failed to load mentioned users:', error);
+          messageData.mentionedUsers = [];
+        }
+      } else {
+        messageData.mentionedUserIds = [];
+        messageData.mentionedUsers = [];
+      }
+      
       return messageData;
     }));
 
@@ -199,9 +239,27 @@ exports.getMessages = async (req, res) => {
   }
 };
 
+// Helper function to extract mention user IDs from content
+// Format: @username or @userId
+const extractMentions = (content) => {
+  if (!content) return [];
+  const mentionRegex = /@(\d+)/g; // Match @userId format
+  const mentions = [];
+  let match;
+  
+  while ((match = mentionRegex.exec(content)) !== null) {
+    const userId = parseInt(match[1]);
+    if (userId && !mentions.includes(userId)) {
+      mentions.push(userId);
+    }
+  }
+  
+  return mentions;
+};
+
 exports.sendMessage = async (req, res) => {
   try {
-    const { conversationId, content, type, fileUrl, replyToId } = req.body;
+    const { conversationId, content, type, fileUrl, replyToId, mentionedUserIds } = req.body;
     const userId = req.user.userId;
 
     const conversation = await Conversation.findByPk(conversationId);
@@ -230,6 +288,25 @@ exports.sendMessage = async (req, res) => {
       }
     }
 
+    // Extract mentions from content if not provided
+    let mentions = mentionedUserIds || [];
+    if (!mentions.length && content) {
+      mentions = extractMentions(content);
+    }
+
+    // Validate mentioned users are participants in the conversation
+    if (mentions.length > 0) {
+      const participants = await ConversationParticipant.findAll({
+        where: {
+          conversationId,
+          userId: { [Op.in]: mentions },
+          isActive: true
+        }
+      });
+      const validUserIds = participants.map(p => p.userId);
+      mentions = mentions.filter(id => validUserIds.includes(id));
+    }
+
     const message = await Message.create({
       conversationId,
       senderId: userId,
@@ -239,12 +316,84 @@ exports.sendMessage = async (req, res) => {
       replyToId: replyToId || null
     });
 
+    // Create mentions
+    if (mentions.length > 0) {
+      const mentionPromises = mentions.map(mentionedUserId => 
+        MessageMention.create({
+          messageId: message.id,
+          userId: mentionedUserId
+        })
+      );
+      await Promise.all(mentionPromises);
+
+      // Create notifications for mentioned users (except the sender)
+      const notificationPromises = mentions
+        .filter(mentionedUserId => mentionedUserId !== userId)
+        .map(async (mentionedUserId) => {
+          try {
+            // Get sender info from user service
+            let senderName = 'Someone';
+            try {
+              const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3002';
+              const response = await axios.get(`${userServiceUrl}/api/users/${userId}`, {
+                headers: {
+                  'Authorization': req.headers.authorization || ''
+                }
+              });
+              senderName = response.data.user?.fullName || response.data.user?.username || 'Someone';
+            } catch (error) {
+              console.error('Failed to get sender info:', error);
+            }
+
+            const conversationName = conversation.type === 'group' 
+              ? conversation.name 
+              : 'private chat';
+
+            await Notification.create({
+              userId: mentionedUserId,
+              type: 'mention',
+              title: 'Bạn được nhắc đến',
+              message: `${senderName} đã nhắc đến bạn trong ${conversationName}`,
+              data: JSON.stringify({
+                messageId: message.id,
+                conversationId: conversation.id,
+                senderId: userId
+              })
+            });
+
+            // Emit socket event for real-time notification
+            const io = ioInstance.getIO();
+            if (io) {
+              io.to(`user_${mentionedUserId}`).emit(SOCKET_EVENTS.NOTIFICATION, {
+                type: 'mention',
+                messageId: message.id,
+                conversationId: conversation.id,
+                senderId: userId
+              });
+            }
+          } catch (error) {
+            console.error(`Failed to create notification for user ${mentionedUserId}:`, error);
+          }
+        });
+
+      await Promise.all(notificationPromises);
+    }
+
     await Conversation.update(
       { lastMessageAt: new Date() },
       { where: { id: conversationId } }
     );
 
-    res.status(201).json({ message });
+    // Reload message with mentions
+    const messageWithMentions = await Message.findByPk(message.id, {
+      include: [{
+        model: MessageMention,
+        as: 'mentions',
+        attributes: ['userId']
+      }]
+    });
+
+    res.status(201).json({ message: messageWithMentions });
   } catch (error) {
     console.error('Send message error:', error);
     res.status(500).json({ message: 'Server error' });

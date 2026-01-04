@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
 const ConversationParticipant = require('../models/ConversationParticipant');
+const MessageMention = require('../models/MessageMention');
+const Notification = require('../models/Notification');
 const { Op } = require('sequelize');
 const { SOCKET_EVENTS, USER_STATUS, NOTIFICATION_TYPES } = require('../constants/socketEvents');
 const ioInstance = require('./ioInstance');
@@ -55,7 +57,7 @@ module.exports = (io) => {
 
     socket.on(SOCKET_EVENTS.SEND_MESSAGE, async (data) => {
       try {
-        const { conversationId, content, type, fileUrl, replyToId, threadId } = data;
+        const { conversationId, content, type, fileUrl, replyToId, threadId, mentionedUserIds = [] } = data;
 
         const conversation = await Conversation.findByPk(conversationId);
         if (!conversation) {
@@ -98,6 +100,32 @@ module.exports = (io) => {
           }
         }
 
+        // Extract mentions from content if not provided
+        let mentions = mentionedUserIds || [];
+        if (!mentions.length && content) {
+          const mentionRegex = /@(\d+)/g;
+          let match;
+          while ((match = mentionRegex.exec(content)) !== null) {
+            const userId = parseInt(match[1]);
+            if (userId && !mentions.includes(userId)) {
+              mentions.push(userId);
+            }
+          }
+        }
+
+        // Validate mentioned users are participants in the conversation
+        if (mentions.length > 0) {
+          const participants = await ConversationParticipant.findAll({
+            where: {
+              conversationId,
+              userId: { [Op.in]: mentions },
+              isActive: true
+            }
+          });
+          const validUserIds = participants.map(p => p.userId);
+          mentions = mentions.filter(id => validUserIds.includes(id));
+        }
+
         const message = await Message.create({
           conversationId,
           senderId: socket.userId,
@@ -108,16 +136,85 @@ module.exports = (io) => {
           threadId: threadId || null
         });
 
-        if (replyToId) {
-          await message.reload({
-            include: [{
+        // Create mentions
+        if (mentions.length > 0) {
+          const mentionPromises = mentions.map(mentionedUserId => 
+            MessageMention.create({
+              messageId: message.id,
+              userId: mentionedUserId
+            })
+          );
+          await Promise.all(mentionPromises);
+
+          // Create notifications for mentioned users (except the sender)
+          const notificationPromises = mentions
+            .filter(mentionedUserId => mentionedUserId !== socket.userId)
+            .map(async (mentionedUserId) => {
+              try {
+                // Get sender info from user service
+                let senderName = 'Someone';
+                try {
+                  const axios = require('axios');
+                  const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3002';
+                  const token = socket.handshake.auth.token;
+                  const response = await axios.get(`${userServiceUrl}/api/users/${socket.userId}`, {
+                    headers: {
+                      'Authorization': `Bearer ${token}`
+                    }
+                  });
+                  senderName = response.data.user?.fullName || response.data.user?.username || 'Someone';
+                } catch (error) {
+                  console.error('Failed to get sender info:', error);
+                }
+
+                const conversationName = conversation.type === 'group' 
+                  ? conversation.name 
+                  : 'private chat';
+
+                await Notification.create({
+                  userId: mentionedUserId,
+                  type: 'mention',
+                  title: 'Bạn được nhắc đến',
+                  message: `${senderName} đã nhắc đến bạn trong ${conversationName}`,
+                  data: JSON.stringify({
+                    messageId: message.id,
+                    conversationId: conversation.id,
+                    senderId: socket.userId
+                  })
+                });
+
+                // Emit socket event for real-time notification
+                io.to(`user_${mentionedUserId}`).emit(SOCKET_EVENTS.NOTIFICATION, {
+                  type: 'mention',
+                  messageId: message.id,
+                  conversationId: conversation.id,
+                  senderId: socket.userId
+                });
+              } catch (error) {
+                console.error(`Failed to create notification for user ${mentionedUserId}:`, error);
+              }
+            });
+
+          await Promise.all(notificationPromises);
+        }
+
+        // Reload message with mentions and replyTo
+        await message.reload({
+          include: [
+            {
               model: Message,
               as: 'replyTo',
               required: false,
               attributes: ['id', 'content', 'type', 'senderId']
-            }]
-          });
-        }
+            },
+            {
+              model: MessageMention,
+              as: 'mentions',
+              required: false,
+              attributes: ['userId']
+            }
+          ]
+        });
 
         await Conversation.update(
           { lastMessageAt: new Date() },
@@ -127,6 +224,13 @@ module.exports = (io) => {
         let messageData = message.toJSON();
         if (messageData.replyTo) {
           messageData.replyTo = message.replyTo ? message.replyTo.toJSON() : null;
+        }
+        
+        // Add mentions to message data
+        if (messageData.mentions && messageData.mentions.length > 0) {
+          messageData.mentionedUserIds = messageData.mentions.map(m => m.userId);
+        } else {
+          messageData.mentionedUserIds = [];
         }
         
         try {

@@ -1,10 +1,90 @@
 import React from 'react';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, Chip } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { ReplyPreview } from './ReplyPreview';
 import { LocationPreview } from './LocationPreview';
+
+// Helper function to render message with mentions highlighted
+const renderMessageWithMentions = (content, mentionedUserIds = [], mentionedUsers = [], messageSenders = {}, isOwnMessage = false) => {
+  if (!content) return '';
+  
+  // Create a map of userId to user info
+  const userMap = {};
+  mentionedUsers.forEach(user => {
+    userMap[user.id] = user;
+  });
+  Object.values(messageSenders).forEach(user => {
+    if (!userMap[user.id]) {
+      userMap[user.id] = user;
+    }
+  });
+
+  // Split content by mentions (@userId)
+  const parts = [];
+  const mentionRegex = /@(\d+)/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = mentionRegex.exec(content)) !== null) {
+    // Add text before mention
+    if (match.index > lastIndex) {
+      parts.push({ type: 'text', content: content.substring(lastIndex, match.index) });
+    }
+
+    // Add mention
+    const userId = parseInt(match[1]);
+    const user = userMap[userId];
+    const userName = user?.fullName || user?.username || 'Unknown';
+    
+    parts.push({
+      type: 'mention',
+      userId: userId,
+      userName: userName,
+      content: match[0]
+    });
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (lastIndex < content.length) {
+    parts.push({ type: 'text', content: content.substring(lastIndex) });
+  }
+
+  // If no mentions found, return original content
+  if (parts.length === 0) {
+    return content;
+  }
+
+  // Render parts
+  return parts.map((part, index) => {
+    if (part.type === 'mention') {
+      return (
+        <Chip
+          key={index}
+          label={`@${part.userName}`}
+          size="small"
+          sx={{
+            height: 'auto',
+            py: 0.5,
+            px: 1,
+            m: 0.25,
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            backgroundColor: isOwnMessage ? 'rgba(255, 255, 255, 0.25)' : '#6366F1',
+            color: isOwnMessage ? 'white' : 'white',
+            '& .MuiChip-label': {
+              px: 0.5
+            }
+          }}
+        />
+      );
+    }
+    return <span key={index}>{part.content}</span>;
+  });
+};
 
 export const MessageContent = ({ message, isOwnMessage, user, onDownloadFile, messageSenders }) => {
   return (
@@ -102,15 +182,19 @@ export const MessageContent = ({ message, isOwnMessage, user, onDownloadFile, me
       )}
 
       {message.type === 'text' && (
-        <Typography variant="body1" sx={{
-          mb: 0,
-          fontSize: '0.95rem',
-          fontWeight: 400,
-          lineHeight: 1.6,
-          wordBreak: 'break-word',
-          whiteSpace: 'pre-wrap'
-        }}>
-          {message.content}
+        <Typography 
+          variant="body1" 
+          sx={{
+            mb: 0,
+            fontSize: '0.95rem',
+            fontWeight: 400,
+            lineHeight: 1.6,
+            wordBreak: 'break-word',
+            whiteSpace: 'pre-wrap'
+          }}
+          component="div"
+        >
+          {renderMessageWithMentions(message.content, message.mentionedUserIds || [], message.mentionedUsers || [], messageSenders, isOwnMessage)}
         </Typography>
       )}
     </>

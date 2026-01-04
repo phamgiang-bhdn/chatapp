@@ -88,7 +88,7 @@ class SocketService {
     }
   }
 
-  sendMessage(conversationId, content, type = 'text', fileUrl = null, replyToId = null, threadId = null) {
+  sendMessage(conversationId, content, type = 'text', fileUrl = null, replyToId = null, threadId = null, mentionedUserIds = []) {
     if (this.socket) {
       this.socket.emit(SOCKET_EVENTS.SEND_MESSAGE, {
         conversationId,
@@ -96,7 +96,8 @@ class SocketService {
         type,
         fileUrl,
         replyToId,
-        threadId
+        threadId,
+        mentionedUserIds
       });
     } else {
       console.error('Socket not connected');
