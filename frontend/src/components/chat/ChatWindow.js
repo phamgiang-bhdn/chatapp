@@ -42,7 +42,6 @@ const ChatWindow = ({ conversation, onBack }) => {
   const [viewingUserId, setViewingUserId] = useState(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showConfirmLeave, setShowConfirmLeave] = useState(false);
-  const [conversationMembers, setConversationMembers] = useState([]);
 
   // State for messages with reactions
   const [localMessages, setLocalMessages] = useState([]);
@@ -184,45 +183,7 @@ const ChatWindow = ({ conversation, onBack }) => {
 
     setIsAdminOnlyChat(conversation.type === 'group' ? (conversation.adminOnlyChat || false) : false);
 
-    // Load members for mention autocomplete
-    if (conversation?.id) {
-      if (conversation.type === 'group') {
-        chatService.getMembers(conversation.id)
-          .then(async (data) => {
-            const members = data.members || [];
-            const memberDetails = [];
-            for (const member of members) {
-              try {
-                const userData = await userService.getUserById(member.userId);
-                memberDetails.push(userData.user);
-              } catch (error) {
-                console.error(`Failed to load member ${member.userId}:`, error);
-              }
-            }
-            setConversationMembers(memberDetails);
-          })
-          .catch(error => console.error('Failed to load members:', error));
-      } else if (conversation.type === 'private' && conversation.participants) {
-        // For private chat, load both participants
-        (async () => {
-          const memberDetails = [];
-          const loadPromises = conversation.participants
-            .filter(p => p.userId !== user.id)
-            .map(async (participant) => {
-              try {
-                const userData = await userService.getUserById(participant.userId);
-                memberDetails.push(userData.user);
-              } catch (error) {
-                console.error(`Failed to load participant ${participant.userId}:`, error);
-              }
-            });
-          await Promise.all(loadPromises);
-          setConversationMembers(memberDetails);
-        })();
-      }
-    }
-
-      return () => {
+    return () => {
       if (markAsReadTimeoutRef.current) {
         clearTimeout(markAsReadTimeoutRef.current);
       }
@@ -272,22 +233,11 @@ const ChatWindow = ({ conversation, onBack }) => {
     const replyToId = replyingTo ? replyingTo.id : null;
     const threadId = conversation.threadId || (selectedThread ? selectedThread.id : null);
     
-    // Extract mentioned user IDs from message content
-    const mentionRegex = /@(\d+)/g;
-    const mentionedUserIds = [];
-    let match;
-    while ((match = mentionRegex.exec(messageContent)) !== null) {
-      const userId = parseInt(match[1]);
-      if (userId && !mentionedUserIds.includes(userId)) {
-        mentionedUserIds.push(userId);
-      }
-    }
-    
     setNewMessage('');
     setReplyingTo(null);
 
     try {
-      socketService.sendMessage(conversation.id, messageContent, messageType, fileUrl, replyToId, threadId, mentionedUserIds);
+      socketService.sendMessage(conversation.id, messageContent, messageType, fileUrl, replyToId, threadId);
       socketService.sendTyping(conversation.id, false);
       
       if (threadId) {
@@ -605,8 +555,6 @@ const ChatWindow = ({ conversation, onBack }) => {
           onImageSelect={handleImageSelect}
           onLocationClick={handleLocationClick}
           removePreview={removePreview}
-          members={conversationMembers}
-          currentUserId={user?.id}
         />
       )}
       

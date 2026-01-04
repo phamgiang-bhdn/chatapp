@@ -228,14 +228,39 @@ module.exports = (io) => {
         
         // Add mentions to message data
         if (messageData.mentions && messageData.mentions.length > 0) {
-          messageData.mentionedUserIds = messageData.mentions.map(m => m.userId);
+          const mentionedUserIds = messageData.mentions.map(m => m.userId);
+          messageData.mentionedUserIds = mentionedUserIds;
+          
+          // Load mentioned user details
+          try {
+            const axios = require('axios');
+            const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3002';
+            const token = socket.handshake.auth.token;
+            const mentionedUsersPromises = mentionedUserIds.map(async (mentionedUserId) => {
+              try {
+                const response = await axios.get(`${userServiceUrl}/api/users/${mentionedUserId}`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+                return response.data.user;
+              } catch (error) {
+                return { id: mentionedUserId, username: 'Unknown', fullName: 'Unknown User' };
+              }
+            });
+            messageData.mentionedUsers = await Promise.all(mentionedUsersPromises);
+          } catch (error) {
+            console.error('Failed to load mentioned users:', error);
+            messageData.mentionedUsers = [];
+          }
         } else {
           messageData.mentionedUserIds = [];
+          messageData.mentionedUsers = [];
         }
         
         try {
           const axios = require('axios');
-          const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3003';
+          const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3002';
           const token = socket.handshake.auth.token;
           const response = await axios.get(`${userServiceUrl}/api/users/${socket.userId}`, {
             headers: {

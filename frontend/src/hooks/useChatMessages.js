@@ -55,6 +55,21 @@ export const useChatMessages = (conversation, user) => {
   };
 
   const loadSenders = async (messageList, existingSenders = {}) => {
+    // First, collect all mentioned user IDs from messages
+    const mentionedUserIds = new Set();
+    messageList.forEach(message => {
+      if (message.mentionedUserIds && message.mentionedUserIds.length > 0) {
+        message.mentionedUserIds.forEach(userId => mentionedUserIds.add(userId));
+      }
+      if (message.mentionedUsers && message.mentionedUsers.length > 0) {
+        message.mentionedUsers.forEach(user => {
+          if (user && user.id) {
+            mentionedUserIds.add(user.id);
+            existingSenders[user.id] = user; // Add mentioned users to senders
+          }
+        });
+      }
+    });
     const senders = { ...existingSenders };
     const senderIdsToLoad = new Set();
 
@@ -92,6 +107,24 @@ export const useChatMessages = (conversation, user) => {
         }
       });
       await Promise.all(loadPromises);
+    }
+
+    // Load any missing mentioned users
+    const mentionedIdsToLoad = Array.from(mentionedUserIds).filter(
+      userId => !senders[userId] && !loadedUserIdsRef.current.has(userId)
+    );
+    if (mentionedIdsToLoad.length > 0) {
+      const loadMentionedPromises = mentionedIdsToLoad.map(async (userId) => {
+        try {
+          const userData = await userService.getUserById(userId);
+          senders[userId] = userData.user;
+          loadedUserIdsRef.current.add(userId);
+        } catch (error) {
+          console.error(`Failed to load mentioned user ${userId}:`, error);
+          senders[userId] = { id: userId, username: 'Unknown', fullName: 'Unknown User' };
+        }
+      });
+      await Promise.all(loadMentionedPromises);
     }
 
     return senders;
@@ -205,6 +238,64 @@ export const useChatMessages = (conversation, user) => {
             console.error(`Failed to load replyTo sender ${data.message.replyTo.senderId}:`, error);
             loadedUserIdsRef.current.delete(data.message.replyTo.senderId);
           }
+        }
+      }
+
+      // Load mentioned users if exists
+      if (data.message.mentionedUsers && Array.isArray(data.message.mentionedUsers) && data.message.mentionedUsers.length > 0) {
+        const newSenders = {};
+        data.message.mentionedUsers.forEach(user => {
+          if (user && user.id) {
+            const userId = typeof user.id === 'string' ? parseInt(user.id) : user.id;
+            newSenders[userId] = user;
+            newSenders[String(userId)] = user; // Also store as string key
+            loadedUserIdsRef.current.add(userId);
+          }
+        });
+        if (Object.keys(newSenders).length > 0) {
+          if (isMounted) {
+            setMessageSenders(prev => ({
+              ...prev,
+              ...newSenders
+            }));
+          }
+        }
+      }
+      
+      // Also load from mentionedUserIds if mentionedUsers not provided or incomplete
+      if (data.message.mentionedUserIds && Array.isArray(data.message.mentionedUserIds) && data.message.mentionedUserIds.length > 0) {
+        const missingUserIds = data.message.mentionedUserIds.filter(userId => {
+          const id = typeof userId === 'string' ? parseInt(userId) : userId;
+          return !loadedUserIdsRef.current.has(id);
+        });
+        
+        if (missingUserIds.length > 0) {
+          const loadPromises = missingUserIds.map(async (userId) => {
+            const id = typeof userId === 'string' ? parseInt(userId) : userId;
+            loadedUserIdsRef.current.add(id);
+            try {
+              const userData = await userService.getUserById(id);
+              if (isMounted) {
+                setMessageSenders(prev => ({
+                  ...prev,
+                  [id]: userData.user,
+                  [String(id)]: userData.user
+                }));
+              }
+            } catch (error) {
+              console.error(`Failed to load mentioned user ${id}:`, error);
+              loadedUserIdsRef.current.delete(id);
+              // Set fallback
+              if (isMounted) {
+                setMessageSenders(prev => ({
+                  ...prev,
+                  [id]: { id: id, username: 'Unknown', fullName: 'Unknown User' },
+                  [String(id)]: { id: id, username: 'Unknown', fullName: 'Unknown User' }
+                }));
+              }
+            }
+          });
+          await Promise.all(loadPromises);
         }
       }
 

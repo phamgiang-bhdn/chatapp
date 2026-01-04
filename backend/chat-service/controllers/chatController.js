@@ -184,7 +184,7 @@ exports.getMessages = async (req, res) => {
         messageData.replyTo = message.replyTo ? message.replyTo.toJSON() : null;
       }
       try {
-        const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3003';
+        const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3002';
         const response = await axios.get(`${userServiceUrl}/api/users/${message.senderId}`, {
           headers: {
             'Authorization': req.headers.authorization || ''
@@ -206,7 +206,7 @@ exports.getMessages = async (req, res) => {
         
         // Optionally fetch mentioned user details
         try {
-          const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3003';
+          const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3002';
           const mentionedUsersPromises = mentionedUserIds.map(async (mentionedUserId) => {
             try {
               const response = await axios.get(`${userServiceUrl}/api/users/${mentionedUserId}`, {
@@ -834,7 +834,7 @@ exports.getThreadMessages = async (req, res) => {
         messageData.replyTo = message.replyTo ? message.replyTo.toJSON() : null;
       }
       try {
-        const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3003';
+        const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3002';
         const response = await axios.get(`${userServiceUrl}/api/users/${message.senderId}`, {
           headers: {
             'Authorization': req.headers.authorization || ''
@@ -864,7 +864,7 @@ exports.getThreadMessages = async (req, res) => {
           parentMessageData.replyTo = parentMessage.replyTo ? parentMessage.replyTo.toJSON() : null;
         }
         try {
-          const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3003';
+          const userServiceUrl = process.env.USER_SERVICE_URL || 'http://user-service:3002';
           const response = await axios.get(`${userServiceUrl}/api/users/${parentMessage.senderId}`, {
             headers: {
               'Authorization': req.headers.authorization || ''
